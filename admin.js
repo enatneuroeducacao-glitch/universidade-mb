@@ -1,62 +1,44 @@
 (() => {
-  const original = {
-    eyebrow: document.querySelector('.hero .eyebrow').textContent,
-    title: document.querySelector('.hero h1').textContent,
-    description: document.querySelector('.hero p').textContent,
-    footer: document.querySelector('footer').textContent,
-    courses: JSON.parse(JSON.stringify(courses)),
-    glossary: JSON.parse(JSON.stringify(glossary))
-  };
-  let data = JSON.parse(JSON.stringify(original));
-  const json = () => JSON.stringify(data, null, 2);
-  const apply = next => {
-    if (!next || !Array.isArray(next.courses) || !Array.isArray(next.glossary)) throw new Error('O JSON deve conter courses e glossary como listas.');
-    if (!next.courses.every(c => c.id && c.title && c.desc && Array.isArray(c.units) && c.units.every(u => Array.isArray(u) && u.length === 2))) throw new Error('Cada curso precisa de id, title, desc e unidades com título e conteúdo.');
-    if (!next.glossary.every(g => Array.isArray(g) && g.length === 2)) throw new Error('Cada item do glossário deve ter termo e definição.');
-    courses.splice(0, courses.length, ...next.courses);
-    glossary.splice(0, glossary.length, ...next.glossary);
-    data = { eyebrow: String(next.eyebrow || original.eyebrow), title: String(next.title || original.title), description: String(next.description || original.description), footer: String(next.footer || original.footer), courses: JSON.parse(JSON.stringify(courses)), glossary: JSON.parse(JSON.stringify(glossary)) };
-    document.querySelector('.hero .eyebrow').textContent = data.eyebrow;
-    document.querySelector('.hero h1').textContent = data.title;
-    document.querySelector('.hero p').textContent = data.description;
-    document.querySelector('footer').textContent = data.footer;
-    document.getElementById('statCourses').textContent = courses.length;
-    document.getElementById('statLessons').textContent = courses.reduce((n, c) => n + c.units.length, 0);
-  };
-  const status = msg => document.getElementById('adminMessage').textContent = msg;
-  document.getElementById('adminTop').addEventListener('click', () => {
-    showView('admin');
-    document.getElementById('adminContent').value = json();
-    status('Edite o JSON e valide antes de salvar.');
-  });
-  document.getElementById('adminApply').addEventListener('click', () => {
-    try {
-      apply(JSON.parse(document.getElementById('adminContent').value));
-      localStorage.setItem('universidadeMB.content.v1', json());
-      renderCourses(document.getElementById('courseSearch').value);
-      renderGlossary(document.getElementById('glossarySearch').value);
-      renderStats();
-      status('Conteúdo validado e salvo neste navegador. Para publicar para todos, atualize o arquivo no repositório.');
-    } catch (err) { status('Erro de validação: ' + err.message); }
-  });
-  document.getElementById('adminExport').addEventListener('click', () => {
-    const url = URL.createObjectURL(new Blob([json()], {type:'application/json;charset=utf-8'}));
-    const a = document.createElement('a'); a.href = url; a.download = 'universidade-mb-conteudo.json'; a.click(); URL.revokeObjectURL(url);
-  });
-  document.getElementById('adminImportFile').addEventListener('change', async e => {
-    const file = e.target.files && e.target.files[0]; if (!file) return;
-    try { document.getElementById('adminContent').value = await file.text(); status('Arquivo carregado. Clique em Validar e salvar para aplicar.'); }
-    catch (err) { status('Falha ao ler arquivo: ' + err.message); }
-    e.target.value = '';
-  });
-  document.getElementById('adminReset').addEventListener('click', () => {
-    if (!confirm('Restaurar conteúdo original? Isso apaga as alterações locais.')) return;
-    localStorage.removeItem('universidadeMB.content.v1'); apply(original);
-    document.getElementById('adminContent').value = json(); renderCourses(); renderGlossary(); renderStats();
-    status('Conteúdo original restaurado neste navegador.');
-  });
-  try {
-    const saved = localStorage.getItem('universidadeMB.content.v1');
-    if (saved) { apply(JSON.parse(saved)); renderCourses(); renderGlossary(); renderStats(); }
-  } catch (err) { console.warn('Conteúdo local não carregado:', err); }
+const copy=x=>JSON.parse(JSON.stringify(x));
+const original={eyebrow:document.querySelector('.hero .eyebrow').textContent,title:document.querySelector('.hero h1').textContent,description:document.querySelector('.hero p').textContent,footer:document.querySelector('footer').textContent,courses:copy(courses),quiz:copy(quiz),glossary:copy(glossary)};
+let data=copy(original);
+const json=()=>JSON.stringify(data,null,2), status=m=>document.getElementById('adminMessage').textContent=m;
+function validate(d){
+ if(!d||!Array.isArray(d.courses)||!Array.isArray(d.quiz)||!Array.isArray(d.glossary))throw Error('O JSON precisa conter courses, quiz e glossary.');
+ if(!d.courses.every(c=>c.id&&c.title&&c.desc&&Array.isArray(c.units)&&c.units.every(u=>Array.isArray(u)&&u.length===2)))throw Error('Curso inválido: confira identificador, título, descrição e unidades.');
+ if(!d.quiz.every(q=>q.q&&Array.isArray(q.a)&&q.a.length>=2&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.a.length&&q.why))throw Error('Questão inválida: confira enunciado, alternativas, resposta correta e explicação.');
+ if(!d.glossary.every(g=>Array.isArray(g)&&g.length===2))throw Error('Item de glossário inválido.');
+}
+function apply(d){validate(d);courses.splice(0,courses.length,...copy(d.courses));quiz.splice(0,quiz.length,...copy(d.quiz));glossary.splice(0,glossary.length,...copy(d.glossary));data={eyebrow:String(d.eyebrow||original.eyebrow),title:String(d.title||original.title),description:String(d.description||original.description),footer:String(d.footer||original.footer),courses:copy(courses),quiz:copy(quiz),glossary:copy(glossary)};document.querySelector('.hero .eyebrow').textContent=data.eyebrow;document.querySelector('.hero h1').textContent=data.title;document.querySelector('.hero p').textContent=data.description;document.querySelector('footer').textContent=data.footer;document.getElementById('statCourses').textContent=courses.length;document.getElementById('statLessons').textContent=courses.reduce((n,c)=>n+c.units.length,0)}
+function setup(){
+ if(document.getElementById('courseEditor'))return;
+ const panel=document.getElementById('adminContent').closest('.panel'), box=document.createElement('div');box.id='courseEditor';
+ box.innerHTML=`<hr><h3>Gerenciar cursos</h3><p class="muted">Selecione um curso para editar ou excluir, ou limpe o formulário para criar outro. Unidades são editadas em JSON: [["Título","<p>Conteúdo HTML</p>"]].</p>
+ <label>Curso existente<select id="cePick" style="display:block;width:100%;padding:10px;margin:6px 0 12px"></select></label>
+ <div class="field"><label>Identificador</label><input id="ceId" style="width:100%;padding:10px"></div><div class="field"><label>Ícone</label><input id="ceIcon" style="width:100%;padding:10px"></div><div class="field"><label>Categoria</label><input id="ceLevel" style="width:100%;padding:10px"></div><div class="field"><label>Duração</label><input id="ceTime" style="width:100%;padding:10px"></div><div class="field"><label>Título</label><input id="ceTitle" style="width:100%;padding:10px"></div><div class="field"><label>Descrição</label><textarea id="ceDesc" rows="2" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Unidades (JSON)</label><textarea id="ceUnits" rows="7" style="width:100%;padding:10px;font:12px/1.5 monospace"></textarea></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px"><button class="primary" id="ceSave">Adicionar / atualizar curso</button><button class="danger" id="ceDelete">Excluir curso</button><button class="secondary" id="ceNew">Novo curso</button></div>
+ <hr><h3>Gerenciar avaliações e provas</h3><p class="muted">Uma alternativa por linha. A resposta correta usa numeração começando em 1.</p><label>Questão existente<select id="qePick" style="display:block;width:100%;padding:10px;margin:6px 0 12px"></select></label>
+ <div class="field"><label>Enunciado</label><textarea id="qeQ" rows="2" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Alternativas</label><textarea id="qeA" rows="4" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Número da resposta correta</label><input id="qeCorrect" type="number" min="1" value="1" style="width:100%;padding:10px"></div><div class="field"><label>Explicação da resposta</label><textarea id="qeWhy" rows="3" style="width:100%;padding:10px"></textarea></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px"><button class="primary" id="qeSave">Adicionar / atualizar questão</button><button class="danger" id="qeDelete">Excluir questão</button><button class="secondary" id="qeNew">Nova questão</button></div><hr>`;
+ document.getElementById('adminContent').parentElement.insertAdjacentElement('beforebegin',box);
+ const $=id=>document.getElementById(id), draft=()=>JSON.parse($('adminContent').value), put=d=>{$('adminContent').value=JSON.stringify(d,null,2);status('Rascunho atualizado. Clique em “Validar e salvar” para aplicar.');};
+ function fillC(c){$('ceId').value=c?.id||'';$('ceIcon').value=c?.icon||'📘';$('ceLevel').value=c?.level||'Fundamentos';$('ceTime').value=c?.time||'30 min';$('ceTitle').value=c?.title||'';$('ceDesc').value=c?.desc||'';$('ceUnits').value=JSON.stringify(c?.units||[['Nova unidade','<p>Conteúdo da unidade.</p>']],null,2)}
+ function fillQ(q){$('qeQ').value=q?.q||'';$('qeA').value=(q?.a||['','']).join('\n');$('qeCorrect').value=q?q.correct+1:1;$('qeWhy').value=q?.why||''}
+ function picks(d){$('cePick').innerHTML=d.courses.map((c,i)=>'<option value="'+i+'">'+c.title.replace(/</g,'&lt;')+'</option>').join('');$('qePick').innerHTML=d.quiz.map((q,i)=>'<option value="'+i+'">'+(i+1)+'. '+q.q.replace(/</g,'&lt;')+'</option>').join('');fillC(d.courses[0]);fillQ(d.quiz[0])}
+ $('cePick').onchange=()=>fillC(draft().courses[Number($('cePick').value)]);
+ $('qePick').onchange=()=>fillQ(draft().quiz[Number($('qePick').value)]);
+ $('ceNew').onclick=()=>fillC(null);
+ $('ceSave').onclick=()=>{try{const d=draft(),id=$('ceId').value.trim(),c={id,icon:$('ceIcon').value.trim()||'📘',level:$('ceLevel').value.trim()||'Fundamentos',time:$('ceTime').value.trim()||'30 min',title:$('ceTitle').value.trim(),desc:$('ceDesc').value.trim(),units:JSON.parse($('ceUnits').value)};if(!id||!c.title||!c.desc||!Array.isArray(c.units)||!c.units.every(u=>Array.isArray(u)&&u.length===2))throw Error('Confira identificador, título, descrição e JSON das unidades.');const i=d.courses.findIndex(x=>x.id===id);if(i<0)d.courses.push(c);else d.courses[i]=c;put(d);picks(d);$('cePick').value=String(d.courses.findIndex(x=>x.id===id));fillC(c)}catch(e){status('Erro no curso: '+e.message)}};
+ $('ceDelete').onclick=()=>{try{const d=draft(),i=Number($('cePick').value);if(!d.courses[i]||!confirm('Excluir este curso do rascunho?'))return;d.courses.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
+ $('qeNew').onclick=()=>fillQ(null);
+ $('qeSave').onclick=()=>{try{const d=draft(),q={q:$('qeQ').value.trim(),a:$('qeA').value.split('\n').map(x=>x.trim()).filter(Boolean),correct:Number($('qeCorrect').value)-1,why:$('qeWhy').value.trim()};if(!q.q||q.a.length<2||!q.why||!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.a.length)throw Error('Preencha enunciado, 2 ou mais alternativas, resposta correta e explicação.');const i=Number($('qePick').value);if($('qePick').value!==''&&d.quiz[i])d.quiz[i]=q;else d.quiz.push(q);put(d);picks(d);$('qePick').value=String(d.quiz.findIndex(x=>x.q===q.q));fillQ(q)}catch(e){status('Erro na questão: '+e.message)}};
+ $('qeDelete').onclick=()=>{try{const d=draft(),i=Number($('qePick').value);if(!d.quiz[i]||!confirm('Excluir esta questão do rascunho?'))return;d.quiz.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
+ picks(JSON.parse($('adminContent').value));
+}
+document.getElementById('adminTop').addEventListener('click',()=>{showView('admin');document.getElementById('adminContent').value=json();setup();status('Edite cursos e avaliações nos formulários ou altere o JSON completo.');});
+document.getElementById('adminApply').addEventListener('click',()=>{try{apply(JSON.parse(document.getElementById('adminContent').value));localStorage.setItem('universidadeMB.content.v1',json());renderCourses(document.getElementById('courseSearch').value);renderGlossary(document.getElementById('glossarySearch').value);renderStats();renderQuiz();status('Conteúdo validado e salvo neste navegador. Exporte o JSON e atualize o repositório para publicar para todos.');}catch(e){status('Erro de validação: '+e.message)}});
+document.getElementById('adminExport').addEventListener('click',()=>{try{const d=JSON.parse(document.getElementById('adminContent').value);validate(d);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='universidade-mb-conteudo.json';a.click();URL.revokeObjectURL(u);status('JSON exportado.');}catch(e){status('Não foi possível exportar: '+e.message)}});
+document.getElementById('adminImportFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const d=JSON.parse(await f.text());validate(d);document.getElementById('adminContent').value=JSON.stringify(d,null,2);setup();status('JSON importado no rascunho. Clique em Validar e salvar.')}catch(err){status('Arquivo inválido: '+err.message)}e.target.value=''});
+document.getElementById('adminReset').addEventListener('click',()=>{if(!confirm('Restaurar conteúdo original? Isso apaga alterações locais.'))return;localStorage.removeItem('universidadeMB.content.v1');apply(original);document.getElementById('adminContent').value=json();renderCourses();renderGlossary();renderStats();renderQuiz();status('Conteúdo original restaurado neste navegador.')});
+try{const saved=localStorage.getItem('universidadeMB.content.v1');if(saved){const d=JSON.parse(saved);if(!Array.isArray(d.quiz))d.quiz=copy(original.quiz);apply(d);renderCourses();renderGlossary();renderStats();renderQuiz()}}catch(e){console.warn('Conteúdo local não carregado:',e)}
 })();
