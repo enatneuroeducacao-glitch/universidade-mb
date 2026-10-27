@@ -12,6 +12,7 @@ function validate(d){
 function apply(d){validate(d);courses.splice(0,courses.length,...copy(d.courses));quiz.splice(0,quiz.length,...copy(d.quiz));glossary.splice(0,glossary.length,...copy(d.glossary));data={eyebrow:String(d.eyebrow||original.eyebrow),title:String(d.title||original.title),description:String(d.description||original.description),footer:String(d.footer||original.footer),courses:copy(courses),quiz:copy(quiz),glossary:copy(glossary)};document.querySelector('.hero .eyebrow').textContent=data.eyebrow;document.querySelector('.hero h1').textContent=data.title;document.querySelector('.hero p').textContent=data.description;document.querySelector('footer').textContent=data.footer;document.getElementById('statCourses').textContent=courses.length;document.getElementById('statLessons').textContent=courses.reduce((n,c)=>n+c.units.length,0)}
 function setup(){
  if(document.getElementById('courseEditor'))return;
+ let newQuizDraft=false;
  const panel=document.getElementById('adminContent').closest('.panel'), box=document.createElement('div');box.id='courseEditor';
  box.innerHTML=`<hr><h3>Gerenciar cursos</h3><p class="muted">Selecione um curso para editar ou excluir, ou limpe o formulário para criar outro. Unidades são editadas em JSON: [["Título","<p>Conteúdo HTML</p>"]].</p>
  <label>Curso existente<select id="cePick" style="display:block;width:100%;padding:10px;margin:6px 0 12px"></select></label>
@@ -26,12 +27,12 @@ function setup(){
  function fillQ(q){$('qeQ').value=q?.q||'';$('qeA').value=(q?.a||['','']).join('\n');$('qeCorrect').value=q?q.correct+1:1;$('qeWhy').value=q?.why||''}
  function picks(d){$('cePick').innerHTML=d.courses.map((c,i)=>'<option value="'+i+'">'+c.title.replace(/</g,'&lt;')+'</option>').join('');$('qePick').innerHTML=d.quiz.map((q,i)=>'<option value="'+i+'">'+(i+1)+'. '+q.q.replace(/</g,'&lt;')+'</option>').join('');fillC(d.courses[0]);fillQ(d.quiz[0])}
  $('cePick').onchange=()=>fillC(draft().courses[Number($('cePick').value)]);
- $('qePick').onchange=()=>fillQ(draft().quiz[Number($('qePick').value)]);
+ $('qePick').onchange=()=>{newQuizDraft=false;fillQ(draft().quiz[Number($('qePick').value)]);};
  $('ceNew').onclick=()=>fillC(null);
  $('ceSave').onclick=()=>{try{const d=draft(),id=$('ceId').value.trim(),c={id,icon:$('ceIcon').value.trim()||'📘',level:$('ceLevel').value.trim()||'Fundamentos',time:$('ceTime').value.trim()||'30 min',title:$('ceTitle').value.trim(),desc:$('ceDesc').value.trim(),units:JSON.parse($('ceUnits').value)};if(!id||!c.title||!c.desc||!Array.isArray(c.units)||!c.units.every(u=>Array.isArray(u)&&u.length===2))throw Error('Confira identificador, título, descrição e JSON das unidades.');const i=d.courses.findIndex(x=>x.id===id);if(i<0)d.courses.push(c);else d.courses[i]=c;put(d);picks(d);$('cePick').value=String(d.courses.findIndex(x=>x.id===id));fillC(c)}catch(e){status('Erro no curso: '+e.message)}};
  $('ceDelete').onclick=()=>{try{const d=draft(),i=Number($('cePick').value);if(!d.courses[i]||!confirm('Excluir este curso do rascunho?'))return;d.courses.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
- $('qeNew').onclick=()=>fillQ(null);
- $('qeSave').onclick=()=>{try{const d=draft(),q={q:$('qeQ').value.trim(),a:$('qeA').value.split('\n').map(x=>x.trim()).filter(Boolean),correct:Number($('qeCorrect').value)-1,why:$('qeWhy').value.trim()};if(!q.q||q.a.length<2||!q.why||!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.a.length)throw Error('Preencha enunciado, 2 ou mais alternativas, resposta correta e explicação.');const i=Number($('qePick').value);if($('qePick').value!==''&&d.quiz[i])d.quiz[i]=q;else d.quiz.push(q);put(d);picks(d);$('qePick').value=String(d.quiz.findIndex(x=>x.q===q.q));fillQ(q)}catch(e){status('Erro na questão: '+e.message)}};
+ $('qeNew').onclick=()=>{newQuizDraft=true;fillQ(null);};
+ $('qeSave').onclick=()=>{try{const d=draft(),q={q:$('qeQ').value.trim(),a:$('qeA').value.split('\n').map(x=>x.trim()).filter(Boolean),correct:Number($('qeCorrect').value)-1,why:$('qeWhy').value.trim()};if(!q.q||q.a.length<2||!q.why||!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.a.length)throw Error('Preencha enunciado, 2 ou mais alternativas, resposta correta e explicação.');const i=Number($('qePick').value);if(!newQuizDraft&&$('qePick').value!==''&&d.quiz[i])d.quiz[i]=q;else d.quiz.push(q);newQuizDraft=false;put(d);picks(d);$('qePick').value=String(d.quiz.findIndex(x=>x.q===q.q));fillQ(q)}catch(e){status('Erro na questão: '+e.message)}};
  $('qeDelete').onclick=()=>{try{const d=draft(),i=Number($('qePick').value);if(!d.quiz[i]||!confirm('Excluir esta questão do rascunho?'))return;d.quiz.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
  picks(JSON.parse($('adminContent').value));
 }
