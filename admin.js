@@ -5,7 +5,7 @@ let data=copy(original);
 const json=()=>JSON.stringify(data,null,2), status=m=>document.getElementById('adminMessage').textContent=m;
 function validate(d){
  if(!d||!Array.isArray(d.courses)||!Array.isArray(d.quiz)||!Array.isArray(d.glossary))throw Error('O JSON precisa conter courses, quiz e glossary.');
- if(!d.courses.every(c=>c.id&&c.title&&c.desc&&Array.isArray(c.units)&&c.units.every(u=>Array.isArray(u)&&u.length===2)&&(!c.resources||Array.isArray(c.resources)&&c.resources.every(r=>r.title&&['document','image','video','link'].includes(r.type)&&(!r.url||/^https:\/\//i.test(r.url)||/^data:(image|video|application|text)\//i.test(r.url))||r.data)))throw Error('Curso inválido: confira identificador, título, descrição, unidades e materiais complementares.');
+ if(!d.courses.every(c=>c.id&&c.title&&c.desc&&Array.isArray(c.units)&&c.units.every(u=>Array.isArray(u)&&u.length===2)&&(!c.resources||Array.isArray(c.resources)&&c.resources.every(r=>r.title&&['document','image','video','link'].includes(r.type)&&(!r.url||/^https:\/\//i.test(r.url)||/^data:(image|video|application|text)\//i.test(r.url))||r.data))))throw Error('Curso inválido: confira identificador, título, descrição, unidades e materiais complementares.');
  if(!d.quiz.every(q=>q.q&&Array.isArray(q.a)&&q.a.length>=2&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.a.length&&q.why))throw Error('Questão inválida: confira enunciado, alternativas, resposta correta e explicação.');
  if(!d.glossary.every(g=>Array.isArray(g)&&g.length===2))throw Error('Item de glossário inválido.');
 }
