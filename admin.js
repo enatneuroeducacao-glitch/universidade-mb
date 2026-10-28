@@ -23,9 +23,16 @@ function setup(){
  <div class="field"><label>Enunciado</label><textarea id="qeQ" rows="2" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Alternativas</label><textarea id="qeA" rows="4" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Número da resposta correta</label><input id="qeCorrect" type="number" min="1" value="1" style="width:100%;padding:10px"></div><div class="field"><label>Explicação da resposta</label><textarea id="qeWhy" rows="3" style="width:100%;padding:10px"></textarea></div>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px"><button class="primary" id="qeSave">Adicionar / atualizar questão</button><button class="danger" id="qeDelete">Excluir questão</button><button class="secondary" id="qeNew">Nova questão</button></div><hr>`;
  document.getElementById('adminContent').parentElement.insertAdjacentElement('beforebegin',box);
+ // Mantém as ações principais do curso no topo do editor, acessíveis durante a edição.
+ const courseActions=box.querySelector('#ceSave').parentElement;
+ courseActions.classList.add('course-actions-top');
+ const courseHeading=[...box.querySelectorAll('h3')].find(h=>h.textContent.trim()==='Gerenciar cursos');
+ if(courseHeading) courseHeading.insertAdjacentElement('afterend',courseActions);
  const $=id=>document.getElementById(id), draft=()=>JSON.parse($('adminContent').value), put=d=>{$('adminContent').value=JSON.stringify(d,null,2);status('Rascunho atualizado. Clique em “Validar e salvar” para aplicar.');};
  function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
  function addEditorStyles(){if($('adminEditorStyles'))return;const style=document.createElement('style');style.id='adminEditorStyles';style.textContent=`
+#courseEditor .course-actions-top{position:sticky;top:68px;z-index:4;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin:12px 0 18px;box-shadow:0 8px 22px #183a3018}
+#courseEditor .course-actions-top button{min-height:42px}
 #courseEditor .editor-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;background:linear-gradient(180deg,#fff,#fcfbf8);box-shadow:0 5px 18px #183a3008}
 #courseEditor .editor-card>label{display:block;font-weight:750;margin:12px 0 5px}
 #courseEditor input:not([type=file]),#courseEditor select,#courseEditor textarea{width:100%;border:1px solid #d9dfd9;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:14px/1.6 ui-sans-serif,system-ui,sans-serif;transition:border-color .15s,box-shadow .15s}
