@@ -43,3 +43,53 @@ O código calcula a nota como percentual de respostas corretas e considera aprov
 - A persistência de progresso depende do armazenamento local do navegador.
 - Alterações feitas no repositório não significam publicação imediata; aguarde o fluxo de implantação.
 - A revisão automática de HTML/CSS/JS não substitui testes visuais reais em diferentes navegadores e tamanhos de tela.
+
+
+## Auditoria de qualidade e próximas etapas
+
+### Diagnóstico da revisão técnica
+
+- Os 10 cursos encontrados em `app.js` têm um conjunto de avaliação com o mesmo identificador; não foram encontrados cursos sem teste correspondente nem testes órfãos.
+- `index.html`, `styles.css`, `app.js` e `admin.js` são servidos como arquivos estáticos, sem dependências externas identificadas no HTML.
+- Foram adicionados um link para saltar ao conteúdo principal e identificadores SVG únicos para evitar conflito entre os gradientes dos dois logotipos.
+- A interface tem regras para telas estreitas, foco visível e movimento reduzido; isso não substitui a verificação visual e com teclado em navegadores reais.
+- O painel de administração não tem autenticação real. Como o site é estático, ele não deve ser tratado como área administrativa privada: alterações locais ficam no navegador e não são publicadas para todos os alunos.
+- O progresso do aluno depende do armazenamento local do navegador, não de uma conta nem de sincronização entre dispositivos.
+- O arquivo `app.js` ainda concentra cursos, ferramentas, avaliações e navegação em um arquivo grande. A separação em arquivos de conteúdo é uma melhoria futura, desde que seja feita com testes de regressão.
+
+### Plano de trabalho recomendado
+
+#### Etapa A — Integridade da publicação
+- [ ] Confirmar a última execução do GitHub Actions como sucesso.
+- [ ] Abrir a página pública após atualização forçada e verificar se CSS, JavaScript e favicon carregam.
+- [ ] Confirmar início, catálogo, curso, ferramenta, progresso e glossário.
+
+#### Etapa B — Testes funcionais das ferramentas
+- [ ] Criar casos válidos, entradas vazias, valores negativos/zero, limites e valores inválidos.
+- [ ] Conferir cálculos manualmente com exemplos conhecidos.
+- [ ] Garantir que erros sejam explicados sem apagar resultados anteriores silenciosamente.
+
+#### Etapa C — Cursos e avaliações
+- [ ] Testar todos os 10 cursos: sequência, última unidade, avaliação, feedback e nova tentativa.
+- [ ] Verificar reprovação abaixo de 70%, aprovação no limite, bloqueio do próximo curso e liberação após aprovação.
+- [ ] Confirmar que progresso e última nota continuam corretos após recarregar a página.
+- [ ] Se a regra for exatamente 70%, manter dez questões por avaliação ou outra quantidade que represente esse limite sem arredondamento enganoso.
+
+#### Etapa D — Acessibilidade e responsividade
+- [ ] Testar larguras aproximadas de 320, 375, 768, 1024 e 1440 px.
+- [ ] Completar os fluxos usando somente teclado, incluindo abrir curso, responder avaliação e voltar ao catálogo.
+- [ ] Conferir contraste de texto, foco, zoom de 200%, mensagens de erro e resultados com leitor de tela.
+- [ ] Verificar ausência de rolagem horizontal e sobreposição de botões em telas pequenas.
+
+#### Etapa E — Segurança e limites da administração
+- [ ] Manter explícito que o painel administrativo não é protegido por login.
+- [ ] Não inserir senhas ou dados pessoais no código estático.
+- [ ] Se for necessário administrar cursos de forma privada ou sincronizar progresso entre alunos, planejar autenticação e armazenamento em um serviço com controle de acesso; isso seria uma mudança de arquitetura, não apenas uma página estática.
+
+#### Etapa F — Organização técnica gradual
+- [ ] Após os testes de regressão, avaliar separar os dados dos cursos e bancos de questões de `app.js`.
+- [ ] Criar um checklist repetível antes de cada publicação.
+- [ ] Considerar testes automatizados simples para validar IDs de cursos, conjuntos de questões, links de arquivos e estrutura HTML.
+- [ ] Preservar o GitHub Pages sem build e sem dependências enquanto essa arquitetura atender às necessidades.
+
+**Ordem recomendada:** A → B → C → D → E → F. Não iniciar uma separação maior do JavaScript antes de validar ferramentas e avaliações, para reduzir o risco de repetir o problema de conteúdo que desaparece após publicação.
