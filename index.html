@@ -18,20 +18,20 @@
 <main class="main" id="main-content" tabindex="-1">
 <section id="view-account" class="hidden">
 <div class="section-head"><div><h2>Área do participante</h2><p>Crie sua conta para iniciar os cursos e acompanhar seu progresso em diferentes acessos.</p></div></div>
-<div class="panel" style="max-width:760px">
-<div id="learnerSignedIn" class="hidden"><h3 id="learnerWelcome">Você está conectado</h3><p class="muted">Seu progresso poderá ser sincronizado com sua conta.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button id="learnerGoCourses">Explorar cursos</button><button id="learnerLogout" class="secondary">Sair da conta</button></div></div>
+<div class="panel account-auth-card" style="max-width:760px">
+<div class="account-signed-in" id="learnerSignedIn" class="hidden"><h3 id="learnerWelcome">Você está conectado</h3><p class="muted">Seu progresso poderá ser sincronizado com sua conta.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button id="learnerGoCourses">Explorar cursos</button><button id="learnerLogout" class="secondary">Sair da conta</button></div></div>
 <div id="learnerAuthForms">
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"><button id="showLearnerRegister">Criar cadastro</button><button id="showLearnerLogin" class="secondary">Já tenho cadastro</button></div>
-<form id="learnerRegisterForm" style="display:grid;gap:12px">
-<label>Nome completo<input id="learnerFullName" required minlength="3" maxlength="160 autocomplete="name" placeholder="Seu nome completo"></label>
-<label>E-mail<input id="learnerRegisterEmail" required type="email" autocomplete="email" placeholder="voce@exemplo.com"></label>
-<label>Crie uma senha<input id="learnerRegisterPassword" required type="password" minlength="6" maxlength="128" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></label>
+<div class="account-tabs" role="tablist" aria-label="Acesso do participante"><button id="showLearnerRegister" type="button" class="account-tab is-active">Criar cadastro</button><button id="showLearnerLogin" type="button" class="secondary account-tab">Já tenho cadastro</button></div>
+<form id="learnerRegisterForm" class="account-form">
+<label class="account-field">Nome completo<input id="learnerFullName" required minlength="3" maxlength="160" autocomplete="name" placeholder="Seu nome completo"></label>
+<label class="account-field">E-mail<input id="learnerRegisterEmail" required type="email" autocomplete="email" placeholder="voce@exemplo.com"></label>
+<label class="account-field">Crie uma senha<input id="learnerRegisterPassword" required type="password" minlength="6" maxlength="128" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></label>
 <label style="display:flex;gap:8px;align-items:flex-start"><input id="learnerTerms" type="checkbox" required style="width:auto;margin-top:4px"><span>Concordo com o uso dos meus dados para cadastro, registro de progresso e gestão da aprendizagem.</span></label>
 <button type="submit">Criar minha conta e começar</button>
 </form>
-<form id="learnerLoginForm" class="hidden" style="display:grid;gap:12px">
-<label>E-mail<input id="learnerLoginEmail" required type="email" autocomplete="email"></label>
-<label>Senha<input id="learnerLoginPassword" required type="password" autocomplete="current-password"></label>
+<form id="learnerLoginForm" class="account-form hidden">
+<label class="account-field">E-mail<input id="learnerLoginEmail" required type="email" autocomplete="email"></label>
+<label class="account-field">Senha<input id="learnerLoginPassword" required type="password" autocomplete="current-password"></label>
 <button type="submit">Entrar</button>
 </form>
 <p id="learnerAuthStatus" class="tagline" role="status" aria-live="polite"></p>
