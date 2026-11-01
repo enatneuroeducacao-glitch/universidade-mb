@@ -143,6 +143,349 @@ function isCourseIconImage(icon){return /^data:image\/(png|jpeg|webp);base64,/i.
 function escapeCourseIcon(icon){return String(icon||'📘').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
 function courseIconMarkup(icon){return isCourseIconImage(icon)?'<img src="'+icon+'" alt="" style="width:1.4em;height:1.4em;object-fit:contain;vertical-align:middle">':escapeCourseIcon(icon)}
 function courseIllustration(c){const palette={Fundamentos:['#f2e5ce','#b1813f','#473b30'],Lentes:['#e7eee8','#47786d','#203f39'],Técnico:['#e8eaf3','#6673a5','#343b63'],Atendimento:['#f4e4dc','#c07b58','#593c31'],Gestão:['#e7e9dc','#77854e','#37402c']};const p=palette[c.level]||palette.Fundamentos;const seed=(c.id||'curso').split('').reduce((a,x)=>a+x.charCodeAt(0),0);const tilt=(seed%9)-4;const label=String(c.title||'curso').replace(/[&<>]/g,'');return '<div class="course-illustration" role="img" aria-label="Ilustração de '+label+'"><svg viewBox="0 0 360 142" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="360" height="142" rx="12" fill="'+p[0]+'"/><circle cx="285" cy="23" r="58" fill="'+p[1]+'" opacity=".10"/><circle cx="45" cy="122" r="54" fill="'+p[1]+'" opacity=".10"/><path d="M0 110 Q90 82 170 116 T360 92 L360 142 L0 142Z" fill="'+p[1]+'" opacity=".10"/><g transform="translate(180 71) rotate('+tilt+')"><path d="M-103 -12 Q-103 -31 -85 -31 H-50 Q-32 -31 -32 -12 V6 Q-32 25 -50 25 H-85 Q-103 25 -103 6Z" fill="#fffdfa" stroke="'+p[1]+'" stroke-width="5"/><path d="M32 -12 Q32 -31 50 -31 H85 Q103 -31 103 -12 V6 Q103 25 85 25 H50 Q32 25 32 6Z" fill="#fffdfa" stroke="'+p[1]+'" stroke-width="5"/><path d="M-32 -8 Q0 -24 32 -8" fill="none" stroke="'+p[1]+'" stroke-width="5" stroke-linecap="round"/><path d="M-111 -8 L-124 -15 M111 -8 L124 -15" stroke="'+p[1]+'" stroke-width="5" stroke-linecap="round"/><circle cx="0" cy="0" r="26" fill="'+p[0]+'" stroke="'+p[2]+'" stroke-width="1.5"/>'+(isCourseIconImage(c.icon)?'<image href="'+courseIconMarkup(c.icon)+'" x="-18" y="-18" width="36" height="36" preserveAspectRatio="xMidYMid meet"/>':'<text x="0" y="10" text-anchor="middle" font-size="29">'+escapeCourseIcon(c.icon)+'</text>')+'</g><g transform="translate(18 16)"><rect width="7" height="25" rx="3" fill="'+p[1]+'"/><rect x="11" width="7" height="25" rx="3" fill="'+p[2]+'" opacity=".45"/></g></svg></div>'}
+
+// Catálogo ampliado: completa a trilha de 24 cursos sem duplicar os cursos já existentes.
+const additionalCourses = [
+  {
+    "id": "anatomia-visao",
+    "icon": "👁️",
+    "level": "Fundamentos",
+    "title": "Anatomia e funcionamento do sistema visual",
+    "desc": "Conheça estruturas do olho, caminho da luz e conceitos essenciais para orientar o atendimento sem substituir avaliação clínica.",
+    "time": "1h30",
+    "units": [
+      [
+        "Estruturas e função",
+        "<p>O sistema visual envolve córnea, íris, pupila, cristalino, retina e nervo óptico. Para o atendimento em ótica, conhecer essas estruturas ajuda a compreender a linguagem básica, sem diagnosticar doenças.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Caminho da luz",
+        "<p>A luz atravessa estruturas transparentes e é focalizada na retina. A qualidade da imagem depende de diversos fatores ópticos e biológicos; sintomas persistentes devem ser encaminhados a profissional habilitado.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Limites do atendimento",
+        "<p>Explique termos de forma simples, registre dúvidas e não interprete sintomas como diagnóstico. Dor ocular, perda súbita de visão ou alteração repentina exigem atendimento de saúde imediato.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "visao-simples-multifocal",
+    "icon": "👓",
+    "level": "Lentes",
+    "title": "Visão simples, bifocal e multifocal",
+    "desc": "Compare os principais desenhos de lentes, suas finalidades e os pontos que precisam ser explicados ao cliente.",
+    "time": "1h30",
+    "units": [
+      [
+        "Visão simples",
+        "<p>Uma lente de visão simples possui uma única potência principal para a finalidade prescrita. Confirme a receita, o uso pretendido e a distância de trabalho antes de apresentar opções.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Bifocal e multifocal",
+        "<p>Lentes bifocais apresentam áreas distintas; lentes progressivas oferecem transição gradual entre zonas de visão. A escolha depende da prescrição, medidas, rotina e avaliação profissional.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Explicação ao cliente",
+        "<p>Apresente benefícios e limitações sem garantir adaptação instantânea. Combine expectativa, medidas, prazo de entrega e orientações de uso de maneira transparente.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "tratamentos-lentes",
+    "icon": "✨",
+    "level": "Lentes",
+    "title": "Tratamentos e tecnologias das lentes",
+    "desc": "Entenda antirreflexo, proteção UV, fotossensibilidade, resistência e cuidados de uso, respeitando as especificações do fabricante.",
+    "time": "1h30",
+    "units": [
+      [
+        "Antirreflexo e superfície",
+        "<p>Tratamentos podem reduzir reflexos e facilitar limpeza, conforme tecnologia e fabricante. Explique o que está incluído no produto e evite afirmar que um tratamento elimina todos os reflexos.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Proteção UV e fotossensibilidade",
+        "<p>Diferencie proteção contra ultravioleta de escurecimento por luz. O comportamento das lentes fotossensíveis varia conforme produto, ambiente e condições de uso.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Cuidados e garantia",
+        "<p>Use os métodos de limpeza recomendados pelo fabricante. Registre orientações de conservação, limitações e condições de garantia fornecidas pelo fornecedor.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "materiais-indices",
+    "icon": "🔬",
+    "level": "Lentes",
+    "title": "Materiais, índices de refração e espessura",
+    "desc": "Relacione material, índice de refração, desenho óptico, espessura e limitações de cada opção.",
+    "time": "1h30",
+    "units": [
+      [
+        "Materiais e propriedades",
+        "<p>Materiais diferem em densidade, resistência, índice de refração e comportamento óptico. A especificação correta depende da lente, da armação e das necessidades do usuário.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Índice e espessura",
+        "<p>Índice de refração mais alto pode contribuir para lentes mais finas em determinadas condições, mas não determina sozinho a espessura final. Potência, diâmetro, desenho e montagem também influenciam.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Comparação responsável",
+        "<p>Compare opções com dados técnicos do fabricante, peso, espessura estimada, resistência e custo. Não prometa uma espessura exata sem cálculo ou ferramenta apropriada.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "multifocais-adaptacao",
+    "icon": "🕶️",
+    "level": "Lentes",
+    "title": "Multifocais: corredores, campos visuais e adaptação",
+    "desc": "Conheça zonas de visão, corredor de progressão, medidas necessárias e orientações responsáveis de adaptação.",
+    "time": "1h30",
+    "units": [
+      [
+        "Zonas de visão",
+        "<p>Lentes progressivas normalmente combinam regiões para longe, intermediário e perto, com áreas periféricas de distorção. O desenho varia conforme produto e projeto.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Medidas e montagem",
+        "<p>Altura, centragem, parâmetros da armação e posição de uso são essenciais. Siga o protocolo do fabricante e confira os dados antes de enviar o pedido.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Orientação pós-entrega",
+        "<p>Explique como posicionar a cabeça e os olhos para diferentes distâncias e como fazer a limpeza. Desconforto persistente deve levar à revisão das medidas e avaliação apropriada.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "medidas-centragem",
+    "icon": "📏",
+    "level": "Medidas",
+    "title": "Medidas ópticas e centragem",
+    "desc": "Pratique conceitos de distância pupilar, altura de montagem, referência de armação e conferência de medidas.",
+    "time": "1h30",
+    "units": [
+      [
+        "Distância pupilar",
+        "<p>A distância pupilar é uma medida usada para posicionamento óptico. Registre cada medida conforme o método e equipamento adotados, sem estimar quando a precisão for necessária.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Altura de montagem",
+        "<p>A altura depende da armação ajustada e do tipo de lente. Meça com o cliente usando a armação na posição final e siga os procedimentos do fabricante.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Conferência de dados",
+        "<p>Confira unidade, olho direito/esquerdo, referência da armação e consistência dos valores. Em caso de dúvida ou divergência, repita a medição antes de liberar o pedido.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "visagismo-armacoes",
+    "icon": "🪞",
+    "level": "Armações",
+    "title": "Visagismo óptico e escolha de armações",
+    "desc": "Combine conforto, proporção, estilo, material e necessidades de uso sem prometer resultados clínicos.",
+    "time": "1h30",
+    "units": [
+      [
+        "Formato e proporção",
+        "<p>Considere largura, ponte, comprimento das hastes e posicionamento da armação no rosto. Formato facial pode orientar a conversa, mas não deve limitar a escolha pessoal.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Material e conforto",
+        "<p>Compare acetato, metal e outros materiais disponíveis quanto a peso, ajuste, flexibilidade e manutenção, sempre conforme a ficha do fabricante.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Escolha consultiva",
+        "<p>Pergunte sobre rotina, estilo, atividade e orçamento. Ajuste a armação com segurança e confirme conforto, estabilidade e compatibilidade com as lentes.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "laboratorio-qualidade",
+    "icon": "🧪",
+    "level": "Operação",
+    "title": "Laboratório óptico e controle de qualidade",
+    "desc": "Acompanhe etapas de conferência, montagem, inspeção visual, identificação de não conformidades e entrega.",
+    "time": "1h30",
+    "units": [
+      [
+        "Recebimento do pedido",
+        "<p>Confira identificação, receita transcrita, tipo de lente, tratamento, medidas e armação. Resolva divergências antes de iniciar a montagem.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Montagem e inspeção",
+        "<p>Siga instruções técnicas e equipamentos apropriados. Inspecione riscos, lascas, tensão, alinhamento, limpeza e estabilidade da armação.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Não conformidades",
+        "<p>Registre defeito, lote, fornecedor e evidências. Separe o produto até a análise e comunique prazos e soluções sem atribuir causas sem verificação.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "conflitos-atendimento",
+    "icon": "🤝",
+    "level": "Atendimento",
+    "title": "Situações difíceis e resolução de conflitos",
+    "desc": "Organize escuta, registro, comunicação clara e encaminhamento de reclamações com postura profissional.",
+    "time": "1h30",
+    "units": [
+      [
+        "Escuta e acolhimento",
+        "<p>Deixe o cliente explicar a situação, confirme o que entendeu e mantenha linguagem respeitosa. Evite interromper, culpar ou prometer uma solução antes de verificar os fatos.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Registro objetivo",
+        "<p>Registre data, pedido, relato, verificações realizadas e encaminhamento combinado. Evite inserir opiniões pessoais ou dados desnecessários.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Resolução e retorno",
+        "<p>Defina responsável e prazo realista para retorno. Quando a solução depender de fornecedor ou profissional habilitado, explique a etapa e mantenha o acompanhamento.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "estoque-compras",
+    "icon": "📦",
+    "level": "Gestão",
+    "title": "Estoque, compras e fornecedores",
+    "desc": "Aprenda cadastro, classificação, giro, estoque mínimo, recebimento, devoluções e avaliação de fornecedores.",
+    "time": "1h30",
+    "units": [
+      [
+        "Cadastro e recebimento",
+        "<p>Padronize descrição, código, categoria, fornecedor, custo e unidade. Compare o documento de recebimento com os itens físicos antes de confirmar a entrada.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Giro e estoque mínimo",
+        "<p>Acompanhe consumo, sazonalidade, prazo de reposição e itens parados. Estoque mínimo deve considerar demanda e tempo de fornecimento, não apenas uma quantidade arbitrária.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Compras e fornecedores",
+        "<p>Compare qualidade, preço total, prazo, política de troca e suporte. Registre devoluções e divergências para apoiar futuras decisões.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "gestao-financeira",
+    "icon": "📊",
+    "level": "Gestão",
+    "title": "Gestão financeira e indicadores de uma ótica",
+    "desc": "Diferencie faturamento, recebimentos, custos, margem, despesas e fluxo de caixa para apoiar decisões.",
+    "time": "1h30",
+    "units": [
+      [
+        "Receita e recebimento",
+        "<p>Faturamento representa vendas registradas; recebimento é o ingresso efetivo de recursos. Vendas parceladas, taxas e inadimplência exigem acompanhamento separado.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Custos e margem",
+        "<p>Diferencie custo de mercadoria, despesas fixas, taxas e tributos aplicáveis. Margem não é igual ao faturamento e deve ser calculada com critérios consistentes.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Fluxo de caixa e indicadores",
+        "<p>Projete entradas e saídas por data, concilie caixa e bancos e revise indicadores periodicamente. Use registros confiáveis antes de tomar decisões de compra ou investimento.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "sistemas-protecao-dados",
+    "icon": "🔐",
+    "level": "Digital",
+    "title": "Sistemas digitais, cadastro e proteção de dados",
+    "desc": "Padronize registros, controle de acesso, qualidade cadastral e tratamento responsável de dados de clientes.",
+    "time": "1h30",
+    "units": [
+      [
+        "Qualidade cadastral",
+        "<p>Use campos padronizados, evite duplicidades e corrija dados com base em fonte confiável. Restrinja alterações aos perfis que precisam delas.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Acesso e segurança",
+        "<p>Utilize contas individuais, senhas fortes e permissões adequadas. Não compartilhe credenciais nem mantenha informações de clientes em arquivos públicos.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Privacidade no atendimento",
+        "<p>Colete apenas dados necessários à finalidade, explique o uso quando apropriado e siga as políticas e obrigações legais aplicáveis à proteção de dados.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "lideranca-equipes",
+    "icon": "👥",
+    "level": "Gestão",
+    "title": "Liderança e treinamento de equipes de ótica",
+    "desc": "Estruture integração, treinamento, feedback, rotina operacional e acompanhamento de qualidade de atendimento.",
+    "time": "1h30",
+    "units": [
+      [
+        "Integração e rotina",
+        "<p>Defina responsabilidades, procedimentos e canais de comunicação. Uma integração estruturada reduz variações e ajuda novos colaboradores a compreender padrões de atendimento.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Treinamento e feedback",
+        "<p>Use demonstração, prática supervisionada e critérios observáveis. Dê feedback específico, respeitoso e orientado a ações que possam ser verificadas.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Acompanhamento da qualidade",
+        "<p>Revise erros recorrentes, prazos, retrabalho e satisfação dos clientes. Transforme os resultados em melhorias de processo, sem usar indicadores isolados para julgar pessoas.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  },
+  {
+    "id": "triagem-eventos",
+    "icon": "🩺",
+    "level": "Equipamentos",
+    "title": "Equipamentos de triagem visual em eventos",
+    "desc": "Conheça finalidade, preparação, limitações e comunicação adequada dos resultados de equipamentos de triagem.",
+    "time": "1h30",
+    "units": [
+      [
+        "Finalidade e limites",
+        "<p>Equipamentos de triagem podem sinalizar a necessidade de avaliação adicional, mas não substituem consulta, diagnóstico ou prescrição. Explique essa diferença antes do procedimento.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Preparação e operação",
+        "<p>Verifique condições de uso, higienização, calibração ou verificações recomendadas pelo fabricante e instruções do equipamento. Registre eventuais falhas e interrompa o uso se houver dúvida de segurança.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ],
+      [
+        "Comunicação dos resultados",
+        "<p>Apresente resultados com linguagem neutra, preserve a privacidade e indique procura de profissional habilitado quando apropriado. Não prometa diagnóstico nem prescreva correção visual com base apenas na triagem.</p><h3>Aplicação prática</h3><p>Analise um caso de rotina, confira as informações disponíveis, registre a decisão e identifique quando é necessário consultar o responsável técnico, o fornecedor ou o profissional habilitado.</p><div class=\"callout\">Ponto de atenção: siga os procedimentos da empresa, as especificações do fabricante e os limites de atuação profissional.</div>"
+      ]
+    ]
+  }
+];
+const courseChronologyTitles = [
+  "Anatomia e funcionamento do sistema visual",
+  "Leitura de receitas ópticas",
+  "Visão simples, bifocal e multifocal",
+  "Tratamentos e tecnologias das lentes",
+  "Materiais, índices de refração e espessura",
+  "Multifocais: corredores, campos visuais e adaptação",
+  "Medidas ópticas e centragem",
+  "DNP, DP e centragem",
+  "Anatomia, medidas e materiais das armações",
+  "Armações, rostos e materiais",
+  "Visagismo óptico e escolha de armações",
+  "Equipamentos de uma ótica: uso, momento e cuidados",
+  "Limpeza e manutenção dos óculos",
+  "Laboratório óptico e controle de qualidade",
+  "Atendimento consultivo em óptica",
+  "Atendimento consultivo ao cliente",
+  "Experiência do cliente e fidelização",
+  "Situações difíceis e resolução de conflitos",
+  "Venda técnica ética e apresentação de orçamentos",
+  "Estoque, compras e fornecedores",
+  "Gestão financeira e indicadores de uma ótica",
+  "Sistemas digitais, cadastro e proteção de dados",
+  "Liderança e treinamento de equipes de ótica",
+  "Equipamentos de triagem visual em eventos"
+];
+const normalizeCourseTitle = value => String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+const courseChronologyRank = new Map(courseChronologyTitles.map((title,index)=>[normalizeCourseTitle(title),index]));
+for (const course of additionalCourses) if (!courses.some(existing => existing.id === course.id)) courses.push(course);
+courses.sort((a,b) => (courseChronologyRank.get(normalizeCourseTitle(a.title)) ?? Number.MAX_SAFE_INTEGER) - (courseChronologyRank.get(normalizeCourseTitle(b.title)) ?? Number.MAX_SAFE_INTEGER));
+
 function isCoursePublic(c){const visibility=String(c.visibility||'').trim().toLowerCase();const access=String(c.access||'').trim().toLowerCase();const hiddenVisibility=['draft','hidden','unpublished','private','rascunho','oculto','não publicado','nao publicado','privado'];const restrictedAccess=['private','restricted','enrolled','members','privado','restrito','matriculados'];return !hiddenVisibility.includes(visibility)&&!restrictedAccess.includes(access)}
 function renderCourses(filter=''){const grid=document.getElementById('courseGrid');const list=courses.filter(c=>isCoursePublic(c)&&(c.title+' '+c.desc+' '+c.level).toLowerCase().includes(filter.toLowerCase()));grid.innerHTML=list.length?list.map(c=>'<article class="course-card">'+courseIllustration(c)+'<div class="course-top"><div class="course-icon">'+courseIconMarkup(c.icon)+'</div><span class="pill">'+c.level+'</span></div><h3>'+c.title+'</h3><p>'+c.desc+'</p><div class="meta"><span>◷ '+c.time+'</span><span>▤ '+c.units.length+' unidades</span><span>'+(state.completed.includes(c.id)?'✓ Concluído':'Curso introdutório')+'</span></div><button class="primary" data-course="'+c.id+'">'+(state.completed.includes(c.id)?'Revisar curso':'Começar curso')+' →</button></article>').join(''):'<div class="empty">Nenhum curso encontrado.</div>';grid.querySelectorAll('[data-course]').forEach(b=>b.onclick=()=>openCourse(b.dataset.course))}
 function showView(name){document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));const target=document.getElementById('view-'+name);if(target)target.classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));document.body.classList.remove('home-mode','catalog-mode','lesson-mode','section-mode');if(name==='home'){document.body.classList.add('home-mode');window.scrollTo({top:0,behavior:'smooth'});return}if(name==='courses'){document.body.classList.add('catalog-mode')}else if(name==='lesson'){document.body.classList.add('lesson-mode')}else{document.body.classList.add('section-mode')}if(name==='progress')renderStats();const layout=document.querySelector('.layout');if(layout)window.scrollTo({top:layout.offsetTop-70,behavior:'smooth'})}
