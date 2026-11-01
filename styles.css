@@ -67,3 +67,23 @@ html{scroll-behavior:smooth}
 #view-account .account-signed-in{padding:12px 0}
 #view-account .account-signed-in h3{font-size:1.35rem;margin-bottom:8px}
 @media(max-width:560px){#view-account .account-auth-card{padding:24px 18px;border-radius:17px}#view-account .account-tabs{max-width:none}#view-account .account-tab{padding:10px 8px;font-size:.9rem}}
+
+
+/* Correção definitiva do layout da área do participante */
+#view-account .account-auth-card { display:block!important; }
+#view-account .account-tabs { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; width:100%!important; max-width:440px!important; }
+#view-account .account-form { display:grid!important; grid-template-columns:minmax(0,1fr)!important; align-items:stretch!important; gap:18px!important; width:100%!important; }
+#view-account .account-form .account-field { display:grid!important; grid-template-columns:minmax(0,1fr)!important; gap:8px!important; width:100%!important; min-width:0!important; }
+#view-account .account-form .account-field input { display:block!important; width:100%!important; max-width:none!important; min-width:0!important; min-height:50px!important; padding:12px 14px!important; border:1px solid #d9cbb8!important; border-radius:11px!important; background:#fff!important; font:inherit!important; }
+#view-account .account-form label:has(#learnerTerms) { display:flex!important; flex-direction:row!important; align-items:flex-start!important; gap:10px!important; width:100%!important; }
+#view-account .account-form button[type="submit"] { display:block!important; width:100%!important; min-height:52px!important; border-radius:11px!important; background:#27221d!important; color:#fffdfa!important; border:1px solid #27221d!important; font-weight:800!important; }
+#view-account .account-form button[type="submit"]:hover { background:#49372a!important; }
+#view-account .account-auth-card input:not([type="checkbox"]) { box-sizing:border-box!important; }
+@media(min-width:760px) {
+ #view-account .account-form { max-width:600px!important; }
+}
+@media(max-width:560px) {
+ #view-account .account-auth-card { padding:26px 18px!important; }
+ #view-account .account-tabs { max-width:none!important; }
+ #view-account .account-tab { min-width:0!important; padding:10px 8px!important; }
+}
