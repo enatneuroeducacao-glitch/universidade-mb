@@ -525,6 +525,20 @@ const courseChronologyTitles = [
 const normalizeCourseTitle = value => String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
 const courseChronologyRank = new Map(courseChronologyTitles.map((title,index)=>[normalizeCourseTitle(title),index]));
 for (const course of additionalCourses) if (!courses.some(existing => existing.id === course.id)) courses.push(course);
+// Catálogo canônico: remove cursos antigos, repetidos ou provenientes de versões anteriores.
+const canonicalCourseIds = new Set(["receita","lentes","dnp","armacoes","equipamentos-optica","manutencao","atendimento","experiencia-cliente","venda-tecnica","triagem-visual-eventos","anatomia-visao","visao-simples-multifocal","tratamentos-lentes","materiais-indices","multifocais-adaptacao","medidas-centragem","visagismo-armacoes","laboratorio-qualidade","conflitos-atendimento","estoque-compras","gestao-financeira","sistemas-protecao-dados","lideranca-equipes","triagem-eventos"]);
+const seenCourseIds = new Set();
+const seenCourseTitles = new Set();
+for (let i = courses.length - 1; i >= 0; i--) {
+  const course = courses[i];
+  const normalizedTitle = normalizeCourseTitle(course.title);
+  if (!canonicalCourseIds.has(course.id) || seenCourseIds.has(course.id) || seenCourseTitles.has(normalizedTitle)) {
+    courses.splice(i, 1);
+    continue;
+  }
+  seenCourseIds.add(course.id);
+  seenCourseTitles.add(normalizedTitle);
+}
 courses.sort((a,b) => (courseChronologyRank.get(normalizeCourseTitle(a.title)) ?? Number.MAX_SAFE_INTEGER) - (courseChronologyRank.get(normalizeCourseTitle(b.title)) ?? Number.MAX_SAFE_INTEGER));
 
 function isCoursePublic(c){const visibility=String(c.visibility||'').trim().toLowerCase();const access=String(c.access||'').trim().toLowerCase();const hiddenVisibility=['draft','hidden','unpublished','private','rascunho','oculto','não publicado','nao publicado','privado'];const restrictedAccess=['private','restricted','enrolled','members','privado','restrito','matriculados'];return !hiddenVisibility.includes(visibility)&&!restrictedAccess.includes(access)}
