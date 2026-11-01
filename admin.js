@@ -15,17 +15,15 @@
   const json = value => JSON.stringify(value);
   const slugify = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   function authMode(first) {
-    $('bootstrapTokenField').hidden = !first;
     $('adminFirstSetup').textContent = first ? 'Cancelar configuração inicial' : 'Primeiro acesso';
     $('adminLogin').textContent = first ? 'Criar administrador' : 'Entrar';
     $('adminPassword').autocomplete = first ? 'new-password' : 'current-password';
-    $('adminAuthMessage').textContent = first ? 'Crie a conta inicial com o token fornecido no servidor. A senha deve ter pelo menos 6 caracteres.' : '';
+    $('adminAuthMessage').textContent = first ? 'Primeiro acesso: use o e-mail administrativo autorizado e crie uma senha com pelo menos 6 caracteres.' : '';
   }
   async function setup() {
     try {
-      const data = await request('/api/admin/bootstrap', { method: 'POST', headers: { 'x-bootstrap-token': $('adminBootstrapToken').value }, body: json({ email: $('adminEmail').value, password: $('adminPassword').value }) });
+      const data = await request('/api/admin/bootstrap', { method: 'POST', body: json({ email: $('adminEmail').value, password: $('adminPassword').value }) });
       sayAuth('Administrador criado. Agora entre com seu e-mail e senha.');
-      $('adminBootstrapToken').value = '';
       authMode(false);
     } catch (e) { sayAuth(e.message); }
   }
@@ -45,7 +43,7 @@
     try { await request('/api/admin/logout', { method: 'POST', body: '{}' }); } catch {}
     admin = null; currentCourse = null;
     $('adminAuthPanel').hidden = false; $('adminWorkspace').hidden = true;
-    $('adminPassword').value = ''; $('adminBootstrapToken').value = '';
+    $('adminPassword').value = '';
     authMode(false);
   }
   function coursePayload() {
@@ -232,7 +230,7 @@
       } else { $('adminAuthPanel').hidden=false; $('adminWorkspace').hidden=true; }
     } catch { $('adminAuthPanel').hidden=false; $('adminWorkspace').hidden=true; sayAuth('Não foi possível conectar ao servidor administrativo. Verifique a publicação e as variáveis de ambiente do backend.'); }
   });
-  $('adminLogin').addEventListener('click', () => $('bootstrapTokenField').hidden ? login() : setup());
+  $('adminLogin').addEventListener('click', () => $('adminLogin').textContent === 'Criar administrador' ? setup() : login());
   $('adminFirstSetup').addEventListener('click', () => authMode($('bootstrapTokenField').hidden));
   $('adminLogout').addEventListener('click', logout);
   $('adminNewCourse').addEventListener('click', newCourse);
