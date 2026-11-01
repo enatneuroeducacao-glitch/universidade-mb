@@ -93,17 +93,9 @@ app.get('/health', async (req, res) => {
   catch { res.status(503).json({ ok: false }); }
 });
 app.post('/api/admin/bootstrap', loginLimiter, async (req, res) => {
-  const email = String(req.body.email || '').trim().toLowerCase();
-  const authorizedEmail = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
-  if (!authorizedEmail || email !== authorizedEmail) return res.status(403).json({ error: 'O e-mail informado não está autorizado para o primeiro acesso.' });
-  const password = String(req.body.password || '');
-  if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 6) return res.status(400).json({ error: 'Informe e-mail válido e senha com pelo menos 6 caracteres.' });
-  const count = await pool.query('SELECT COUNT(*)::int AS count FROM admin_users');
-  if (count.rows[0].count > 0) return res.status(409).json({ error: 'O administrador inicial já foi criado. Use o login.' });
-  const hash = await bcrypt.hash(password, 12);
-  const user = await pool.query('INSERT INTO admin_users(email,password_hash,role) VALUES($1,$2,\'admin\') RETURNING id,email,role', [email, hash]);
-  await audit(user.rows[0].id, 'bootstrap_admin', 'admin_user', user.rows[0].id);
-  res.status(201).json({ created: true, admin: user.rows[0] });
+  // Cadastro inicial público desativado. Novos administradores só podem ser
+  // criados por uma sessão administrativa autenticada em /api/admin/users.
+  return res.status(410).json({ error: 'O cadastro inicial público está desativado. Solicite acesso a um administrador autorizado.' });
 });
 app.post('/api/admin/login', loginLimiter, async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
