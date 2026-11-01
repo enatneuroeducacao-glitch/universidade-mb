@@ -20,7 +20,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && origin !== SITE_ORIGIN && !/^https:\/\/universidade-mb\.onrender\.com$/.test(origin)) return res.status(403).json({ error: 'Origem não autorizada.' });
-  if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Credentials', 'true'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-bootstrap-token'); res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS'); }
+  if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Credentials', 'true'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS'); }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -40,7 +40,7 @@ function audit(userId, action, entityType, entityId, details = {}) {
   return pool.query('INSERT INTO admin_audit_log(admin_user_id, action, entity_type, entity_id, details) VALUES($1,$2,$3,$4,$5)', [userId, action, entityType, entityId == null ? null : String(entityId), JSON.stringify(details)]).catch(err => console.error('audit error', err.message));
 }
 async function initialize() {
-  if (!process.env.DATABASE_URL || !process.env.SESSION_SECRET || !process.env.ADMIN_BOOTSTRAP_TOKEN) throw new Error('DATABASE_URL, SESSION_SECRET e ADMIN_BOOTSTRAP_TOKEN são obrigatórios.');
+  if (!process.env.DATABASE_URL || !process.env.SESSION_SECRET || !process.env.ADMIN_BOOTSTRAP_EMAIL) throw new Error('DATABASE_URL, SESSION_SECRET e ADMIN_BOOTSTRAP_EMAIL são obrigatórios.');
   await pool.query(`CREATE TABLE IF NOT EXISTS admin_users (
     id BIGSERIAL PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin','editor')), is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -83,9 +83,9 @@ app.get('/health', async (req, res) => {
   catch { res.status(503).json({ ok: false }); }
 });
 app.post('/api/admin/bootstrap', loginLimiter, async (req, res) => {
-  const supplied = req.get('x-bootstrap-token') || req.body.token;
-  if (!supplied || supplied !== process.env.ADMIN_BOOTSTRAP_TOKEN) return res.status(403).json({ error: 'Token de inicialização inválido.' });
   const email = String(req.body.email || '').trim().toLowerCase();
+  const authorizedEmail = String(process.env.ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
+  if (!authorizedEmail || email !== authorizedEmail) return res.status(403).json({ error: 'O e-mail informado não está autorizado para o primeiro acesso.' });
   const password = String(req.body.password || '');
   if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 6) return res.status(400).json({ error: 'Informe e-mail válido e senha com pelo menos 6 caracteres.' });
   const count = await pool.query('SELECT COUNT(*)::int AS count FROM admin_users');
