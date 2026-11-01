@@ -64,11 +64,12 @@
     if(!status||!list)return;
     status.textContent='Consultando progresso e certificados...';
     try {
-      const [data,certificateData]=await Promise.all([
+      const [data,certificateData,catalogData]=await Promise.all([
         request('/api/admin/learner-progress'),
-        request('/api/admin/certificates')
+        request('/api/admin/certificates'),
+        request('/api/courses')
       ]);
-      const learners=data.learners||[], certificates=certificateData.certificates||[];
+      const learners=data.learners||[], certificates=certificateData.certificates||[], publishedCount=Math.max(1,(catalogData.courses||[]).length);
       status.textContent=learners.length+' participante(s) · '+certificates.length+' certificado(s) emitido(s).';
       list.replaceChildren();
       if(!learners.length){list.innerHTML='<p class="tagline">Ainda não há registros sincronizados. O progresso aparecerá após o aluno entrar na conta e estudar.</p>';return;}
@@ -76,7 +77,6 @@
         const progress=learner.progress||{};
         const completed=Array.isArray(progress.completed)?progress.completed:[];
         const passed=progress.modulePassed&&typeof progress.modulePassed==='object'?progress.modulePassed:{};
-        const publishedCount=24;
         const passedCount=completed.filter(id=>passed[id]===true).length;
         const percent=Math.min(100,Math.round(passedCount/publishedCount*100));
         const certificate=certificates.find(c=>String(c.learner_id)===String(learner.learner_id)&&c.course_id==='__program__');
