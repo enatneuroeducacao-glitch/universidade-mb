@@ -77,6 +77,11 @@ async function initialize() {
   )`);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_courses_status_sort ON courses(status, sort_order)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_modules_course_sort ON course_modules(course_id, sort_order)');
+  await pool.query(`CREATE TABLE IF NOT EXISTS learner_progress (
+    learner_id TEXT PRIMARY KEY, display_name TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+    progress JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_learner_progress_updated ON learner_progress(updated_at DESC)');
 }
 app.get('/health', async (req, res) => {
   try { await pool.query('SELECT 1'); res.json({ ok: true, service: 'universidade-mb-api' }); }
@@ -106,6 +111,29 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
 });
 app.post('/api/admin/logout', requireAdmin, (req, res) => req.session.destroy(() => { res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none' }); res.json({ authenticated: false }); }));
 app.get('/api/admin/me', (req, res) => res.json({ authenticated: Boolean(req.session?.admin), admin: req.session?.admin || null }));
+app.post('/api/progress/sync', async (req,res) => {
+  const learnerId = String(req.body.learner_id || '').trim();
+  const displayName = String(req.body.display_name || '').trim().slice(0,160);
+  const email = String(req.body.email || '').trim().toLowerCase().slice(0,254);
+  const progress = req.body.progress;
+  if (!/^[a-zA-Z0-9_-]{12,100}$/.test(learnerId) || !progress || typeof progress !== 'object' || Array.isArray(progress)) return res.status(400).json({ error: 'Identificador ou dados de progresso inválidos.' });
+  const safeProgress = {
+    completed: Array.isArray(progress.completed) ? progress.completed.filter(v => typeof v === 'string').slice(0,100) : [],
+    scores: progress.scores && typeof progress.scores === 'object' ? progress.scores : {},
+    modulePassed: progress.modulePassed && typeof progress.modulePassed === 'object' ? progress.modulePassed : {},
+    moduleBestScores: progress.moduleBestScores && typeof progress.moduleBestScores === 'object' ? progress.moduleBestScores : {},
+    updatedAt: new Date().toISOString()
+  };
+  await pool.query(`INSERT INTO learner_progress(learner_id,display_name,email,progress,updated_at) VALUES($1,$2,$3,$4,NOW())
+    ON CONFLICT(learner_id) DO UPDATE SET display_name=CASE WHEN EXCLUDED.display_name<>'' THEN EXCLUDED.display_name ELSE learner_progress.display_name END,
+    email=CASE WHEN EXCLUDED.email<>'' THEN EXCLUDED.email ELSE learner_progress.email END, progress=EXCLUDED.progress, updated_at=NOW()`,
+    [learnerId,displayName,email,JSON.stringify(safeProgress)]);
+  res.json({ saved:true, updated_at:safeProgress.updatedAt, notice:'Progresso sincronizado. A identidade do participante ainda não foi verificada.' });
+});
+app.get('/api/admin/learner-progress', requireAdmin, async (req,res) => {
+  const result = await pool.query('SELECT learner_id,display_name,email,progress,updated_at FROM learner_progress ORDER BY updated_at DESC LIMIT 500');
+  res.json({ learners: result.rows });
+});
 app.get('/api/courses', async (req, res) => {
   const publishedOnly = req.query.all !== 'true';
   if (!publishedOnly) return requireAdmin(req, res, async () => {
