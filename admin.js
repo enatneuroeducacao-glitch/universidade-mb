@@ -23,6 +23,9 @@
     if (data.courses.length !== 24) throw new Error('O catálogo deve conter exatamente 24 cursos. Cursos encontrados: ' + data.courses.length + '.');
     const ids = data.courses.map(course => course.id);
     if (ids.some(id => !id) || new Set(ids).size !== ids.length) throw new Error('Cada curso precisa ter um identificador único.');
+    const normalize = value => String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const titles = data.courses.map(course => normalize(course.title));
+    if (titles.some(title => !title) || new Set(titles).size !== titles.length) throw new Error('Existem títulos vazios ou cursos com nomes repetidos. Corrija os títulos antes de salvar.');
     if (!data.courses.every(course => course.title && course.desc && Array.isArray(course.units) && course.units.length && course.units.every(unit => Array.isArray(unit) && unit.length === 2))) throw new Error('Confira título, descrição e unidades de cada curso.');
     if (!data.quiz.every(item => item.q && Array.isArray(item.a) && item.a.length >= 2 && Number.isInteger(item.correct) && item.correct >= 0 && item.correct < item.a.length && item.why)) throw new Error('Há questões de avaliação inválidas.');
     if (!data.glossary.every(item => Array.isArray(item) && item.length === 2)) throw new Error('Há itens inválidos no glossário.');
