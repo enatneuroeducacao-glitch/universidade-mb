@@ -231,7 +231,7 @@
     } catch { $('adminAuthPanel').hidden=false; $('adminWorkspace').hidden=true; sayAuth('Não foi possível conectar ao servidor administrativo. Verifique a publicação e as variáveis de ambiente do backend.'); }
   });
   $('adminLogin').addEventListener('click', () => $('adminLogin').textContent === 'Criar administrador' ? setup() : login());
-  $('adminFirstSetup').addEventListener('click', () => authMode($('bootstrapTokenField').hidden));
+  $('adminFirstSetup').addEventListener('click', () => authMode($('adminLogin').textContent !== 'Criar administrador'));
   $('adminLogout').addEventListener('click', logout);
   $('adminNewCourse').addEventListener('click', newCourse);
   $('adminCourseForm').addEventListener('submit', saveCourse);
