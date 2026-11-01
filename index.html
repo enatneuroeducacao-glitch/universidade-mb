@@ -30,13 +30,48 @@
 <section id="view-glossary" class="hidden"><div class="section-head"><div><h2>Glossário óptico</h2><p>Termos frequentes na rotina de uma ótica.</p></div><input class="search" id="glossarySearch" placeholder="Buscar termo…"></div><div class="panel" id="glossaryList"></div></section>
 <section id="view-about" class="hidden"><div class="section-head"><div><h2>Sobre a formação</h2><p>Aprendizagem prática, responsável e orientada ao cliente.</p></div></div><div class="panel content"><h3>Objetivo</h3><p>A Universidade MB é um ambiente de apoio à formação de equipes de óptica. O conteúdo apresenta conceitos introdutórios para melhorar a comunicação com clientes, o entendimento de produtos e os cuidados no atendimento.</p><h3>Limites profissionais</h3><p>Os materiais são educacionais e não substituem a avaliação de profissional habilitado, a prescrição emitida por profissional competente, a conferência técnica das lentes ou os procedimentos exigidos pela legislação aplicável. Não diagnostique doenças oculares nem altere prescrições por conta própria.</p><h3>Certificação</h3><p>Esta versão inicial não emite certificado profissional nem representa curso reconhecido por órgão regulador. Uma futura certificação deverá ter critérios, carga horária, identificação do aluno, avaliação e regras de emissão definidos.</p><h3>Como usar</h3><ul><li>Estude cada curso e revise os exemplos.</li><li>Faça a avaliação ao final de cada trilha.</li><li>Pratique medidas somente com equipamentos apropriados e supervisão quando necessária.</li><li>Confirme orientações específicas de lentes com fornecedores e laboratórios.</li></ul></div></section>
 <section id="view-admin" class="hidden">
-<div class="section-head"><div><h2>Portal administrativo</h2><p>Gerencie cursos e conteúdo da Universidade MB.</p></div></div>
+<div class="section-head"><div><h2>Portal administrativo</h2><p>Gerencie cursos, módulos, aulas e materiais didáticos.</p></div></div>
+<div class="panel" id="adminAuthPanel">
+<div class="callout"><b>Acesso restrito.</b> Entre com suas credenciais administrativas. No primeiro acesso, use a configuração inicial fornecida pelo responsável técnico.</div>
+<div class="field"><label for="adminEmail">E-mail administrativo</label><input id="adminEmail" type="email" autocomplete="username" placeholder="seu email administrativo"></div>
+<div class="field"><label for="adminPassword">Senha</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 12 caracteres"></div>
+<div class="field" id="bootstrapTokenField" hidden><label for="adminBootstrapToken">Token de configuração inicial</label><input id="adminBootstrapToken" type="password" autocomplete="off" placeholder="Token de inicialização do servidor"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="primary" id="adminLogin">Entrar</button><button class="secondary" id="adminFirstSetup">Primeiro acesso</button></div>
+<p id="adminAuthMessage" class="tagline" role="status" aria-live="polite"></p>
+</div>
+<div id="adminWorkspace" hidden>
+<div class="row" style="gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px"><span id="adminSignedIn" class="tagline"></span><span style="flex:1"></span><button class="secondary" id="adminNewCourse">+ Novo curso</button><button class="secondary" id="adminLogout">Sair</button></div>
+<div class="grid" style="display:grid;grid-template-columns:minmax(220px,0.8fr) minmax(320px,1.7fr);gap:18px;align-items:start">
+<div class="panel"><h3>Cursos cadastrados</h3><p class="tagline">Selecione um curso para editar.</p><div id="adminCourseList" style="display:grid;gap:8px"></div></div>
 <div class="panel">
-<div class="callout"><b>Modo atual:</b> as alterações são salvas apenas neste navegador. Este site estático ainda não possui autenticação administrativa no servidor nem publicação automática para todos os alunos.</div>
-<div class="field"><label for="adminContent">Conteúdo dos cursos (JSON)</label><textarea id="adminContent" rows="18" spellcheck="false" style="width:100%;font-family:monospace"></textarea></div>
-<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
-<button class="primary" id="adminApply">Validar e salvar neste navegador</button><button class="secondary" id="adminExport">Exportar conteúdo JSON</button><label class="secondary" for="adminImportFile" style="padding:10px 14px;border:1px solid var(--line);border-radius:10px;cursor:pointer">Importar JSON</label><input id="adminImportFile" type="file" accept=".json,application/json" style="display:none"><button class="secondary" id="adminReset">Restaurar conteúdo publicado</button><button class="secondary" id="adminBack">Voltar ao catálogo</button>
-</div><p id="adminMessage" class="tagline" role="status" aria-live="polite"></p></div></section>
+<h3 id="adminEditorHeading">Criar curso</h3>
+<form id="adminCourseForm">
+<input type="hidden" id="adminCourseId">
+<div class="field"><label for="adminCourseTitle">Título do curso</label><input id="adminCourseTitle" required maxlength="180" placeholder="Nome do curso"></div>
+<div class="field"><label for="adminCourseSlug">Identificador (URL)</label><input id="adminCourseSlug" required placeholder="nome-do-curso"></div>
+<div class="field"><label for="adminCourseDescription">Descrição</label><textarea id="adminCourseDescription" rows="3" placeholder="Objetivos e apresentação do curso"></textarea></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+<div class="field"><label for="adminCourseLevel">Nível</label><select id="adminCourseLevel"><option>Fundamentos</option><option>Intermediário</option><option>Avançado</option><option>Especialização</option></select></div>
+<div class="field"><label for="adminCourseDuration">Carga horária</label><input id="adminCourseDuration" placeholder="Ex.: 20 horas"></div>
+<div class="field"><label for="adminCourseStatus">Situação</label><select id="adminCourseStatus"><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="archived">Arquivado</option></select></div>
+<div class="field"><label for="adminCourseOrder">Ordem no catálogo</label><input id="adminCourseOrder" type="number" min="0" value="0"></div>
+</div>
+<div class="field"><label for="adminModuleTitle">Título da aula/módulo</label><input id="adminModuleTitle" placeholder="Ex.: Introdução ao tema"></div>
+<div class="field"><label>Conteúdo da aula</label>
+<div class="editor-toolbar" role="toolbar" aria-label="Formatação de texto" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+<button type="button" class="secondary" data-format="bold" aria-label="Negrito"><b>B</b></button><button type="button" class="secondary" data-format="italic" aria-label="Itálico"><i>I</i></button><button type="button" class="secondary" data-format="underline" aria-label="Sublinhado"><u>U</u></button><button type="button" class="secondary" data-format="insertUnorderedList">• Lista</button><button type="button" class="secondary" data-format="insertOrderedList">1. Lista</button><button type="button" class="secondary" data-format="justifyLeft">Esquerda</button><button type="button" class="secondary" data-format="justifyCenter">Centralizar</button><button type="button" class="secondary" data-format="justifyRight">Direita</button>
+<select id="adminFontFamily" aria-label="Fonte" style="max-width:160px"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Trebuchet MS">Trebuchet MS</option><option value="Times New Roman">Times New Roman</option></select>
+<select id="adminFontSize" aria-label="Tamanho da fonte" style="max-width:110px"><option value="3">Normal</option><option value="2">Pequena</option><option value="4">Grande</option><option value="5">Título</option><option value="6">Título grande</option></select>
+</div>
+<div id="adminRichEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Conteúdo formatado da aula" style="min-height:220px;padding:14px;border:1px solid var(--line);border-radius:10px;background:white;color:#29231d;line-height:1.65"></div></div>
+<div class="field"><label for="adminCourseFiles">Materiais de apoio (PDF, imagens, DOCX, PPTX, TXT; até 15 MB por arquivo)</label><input id="adminCourseFiles" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx,.pptx"><p class="tagline">Os arquivos são armazenados no banco da Universidade MB.</p></div>
+<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px"><button type="submit" class="primary" id="adminSaveCourse">Salvar curso</button><button type="button" class="secondary" id="adminSaveModule">Salvar aula/módulo</button><button type="button" class="secondary" id="adminPreview">Pré-visualizar conteúdo</button><button type="button" class="secondary" id="adminBackupExport">Exportar backup JSON</button><label class="secondary" for="adminBackupImport" style="padding:10px 14px;border:1px solid var(--line);border-radius:10px;cursor:pointer">Restaurar backup JSON</label><input id="adminBackupImport" type="file" accept=".json,application/json" hidden></div>
+</form>
+<div id="adminAssets" style="margin-top:18px"></div>
+<p id="adminEditorMessage" class="tagline" role="status" aria-live="polite"></p>
+</div></div>
+</div>
+</section>
 <section id="view-lesson" class="hidden"><button class="secondary back" id="backCourses">← Voltar ao catálogo</button><div class="panel content" id="lessonContent"></div></section>
 </main></div></div><footer>Universidade MB · Conteúdo educacional introdutório · Revise sempre as instruções do fabricante e os procedimentos técnicos aplicáveis.</footer>
-<script src="./app.js?v=20261101-4" defer></script><script src="./admin.js?v=20261101-4" defer></script></body></html>
+<script src="./app.js?v=20261101-5" defer></script><script src="./admin.js?v=20261101-5" defer></script></body></html>
