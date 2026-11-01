@@ -90,11 +90,6 @@
     $('adminContent').value = payload();
     message('Conteúdo original restaurado neste navegador.');
   });
-  try {
-    const saved = localStorage.getItem('universidadeMB.content.v1');
-    if (saved) {
-      const data = JSON.parse(saved);
-      apply(data);
-    }
-  } catch (error) { console.warn('Conteúdo administrativo local não carregado:', error); }
+  // Remove conteúdos administrativos locais de versões antigas que podiam reintroduzir cursos duplicados.
+  localStorage.removeItem('universidadeMB.content.v1');
 })();
