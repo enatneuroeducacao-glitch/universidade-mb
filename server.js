@@ -11,7 +11,7 @@ const app = express();
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 8 });
 const PORT = Number(process.env.PORT || 10000);
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://universidade.mboptica.com.br';
-const COOKIE_NAME = 'universidade_mb_admin';
+const COOKIE_NAME = 'universidade_mb_admin_v2';
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
