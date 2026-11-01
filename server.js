@@ -82,6 +82,11 @@ async function initialize() {
     progress JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_learner_progress_updated ON learner_progress(updated_at DESC)');
+  await pool.query(`CREATE TABLE IF NOT EXISTS learners (
+    id BIGSERIAL PRIMARY KEY, full_name TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_login_at TIMESTAMPTZ
+  )`);
 }
 app.get('/health', async (req, res) => {
   try { await pool.query('SELECT 1'); res.json({ ok: true, service: 'universidade-mb-api' }); }
@@ -111,12 +116,26 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
 });
 app.post('/api/admin/logout', requireAdmin, (req, res) => req.session.destroy(() => { res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none' }); res.json({ authenticated: false }); }));
 app.get('/api/admin/me', (req, res) => res.json({ authenticated: Boolean(req.session?.admin), admin: req.session?.admin || null }));
+app.post('/api/learners/register', loginLimiter, async (req,res) => {
+ const fullName=String(req.body.full_name||'').trim().replace(/\s+/g,' ').slice(0,160), email=String(req.body.email||'').trim().toLowerCase().slice(0,254), password=String(req.body.password||'');
+ if(fullName.length<3)return res.status(400).json({error:'Informe seu nome completo.'});
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return res.status(400).json({error:'Informe um e-mail válido.'});
+ if(password.length<6||password.length>128)return res.status(400).json({error:'A senha deve ter entre 6 e 128 caracteres.'});
+ try{const hash=await bcrypt.hash(password,12);const r=await pool.query('INSERT INTO learners(full_name,email,password_hash) VALUES($1,$2,$3) RETURNING id,full_name,email',[fullName,email,hash]);req.session.learner={id:String(r.rows[0].id),full_name:r.rows[0].full_name,email:r.rows[0].email};res.status(201).json({learner:req.session.learner});}
+ catch(e){if(e.code==='23505')return res.status(409).json({error:'Este e-mail já está cadastrado. Entre na sua conta.'});console.error(e.message);res.status(500).json({error:'Não foi possível criar a conta.'});}
+});
+app.post('/api/learners/login', loginLimiter, async (req,res) => {
+ const email=String(req.body.email||'').trim().toLowerCase(), password=String(req.body.password||'');
+ const r=await pool.query('SELECT id,full_name,email,password_hash,is_active FROM learners WHERE email=$1',[email]);const u=r.rows[0];
+ if(!u||!u.is_active||!(await bcrypt.compare(password,u.password_hash)))return res.status(401).json({error:'E-mail ou senha incorretos.'});
+ req.session.learner={id:String(u.id),full_name:u.full_name,email:u.email};await pool.query('UPDATE learners SET last_login_at=NOW() WHERE id=$1',[u.id]);res.json({learner:req.session.learner});
+});
+app.get('/api/learners/me',(req,res)=>res.json({learner:req.session?.learner||null}));
+app.post('/api/learners/logout',(req,res)=>{if(req.session)delete req.session.learner;res.json({ok:true});});
 app.post('/api/progress/sync', async (req,res) => {
-  const learnerId = String(req.body.learner_id || '').trim();
-  const displayName = String(req.body.display_name || '').trim().slice(0,160);
-  const email = String(req.body.email || '').trim().toLowerCase().slice(0,254);
-  const progress = req.body.progress;
-  if (!/^[a-zA-Z0-9_-]{12,100}$/.test(learnerId) || !progress || typeof progress !== 'object' || Array.isArray(progress)) return res.status(400).json({ error: 'Identificador ou dados de progresso inválidos.' });
+  if (!req.session?.learner) return res.status(401).json({error:'Entre na sua conta para sincronizar o progresso.'});
+  const learnerId=String(req.session.learner.id), displayName=req.session.learner.full_name, email=req.session.learner.email, progress=req.body.progress;
+  if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return res.status(400).json({error:'Dados de progresso inválidos.'});
   const safeProgress = {
     completed: Array.isArray(progress.completed) ? progress.completed.filter(v => typeof v === 'string').slice(0,100) : [],
     scores: progress.scores && typeof progress.scores === 'object' ? progress.scores : {},
