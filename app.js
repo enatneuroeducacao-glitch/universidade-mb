@@ -213,7 +213,7 @@ const additionalCourses = [
     "id": "visao-simples-multifocal",
     "icon": "👓",
     "level": "Lentes",
-    "title": "Visão simples, bifocal e multifocal",
+    "title": "Fundamentos da óptica geométrica e formação da imagem",
     "desc": "Compare os principais desenhos de lentes, suas finalidades e os pontos que precisam ser explicados ao cliente.",
     "time": "1h30",
     "units": [
@@ -301,7 +301,7 @@ const additionalCourses = [
     "id": "medidas-centragem",
     "icon": "📏",
     "level": "Medidas",
-    "title": "Medidas ópticas e centragem",
+    "title": "Conferência técnica de pedidos e parâmetros de montagem",
     "desc": "Pratique conceitos de distância pupilar, altura de montagem, referência de armação e conferência de medidas.",
     "time": "1h30",
     "units": [
@@ -323,7 +323,7 @@ const additionalCourses = [
     "id": "visagismo-armacoes",
     "icon": "🪞",
     "level": "Armações",
-    "title": "Visagismo óptico e escolha de armações",
+    "title": "Ajuste, anatomia e ergonomia das armações",
     "desc": "Combine conforto, proporção, estilo, material e necessidades de uso sem prometer resultados clínicos.",
     "time": "1h30",
     "units": [
@@ -477,7 +477,7 @@ const additionalCourses = [
     "id": "triagem-eventos",
     "icon": "🩺",
     "level": "Equipamentos",
-    "title": "Equipamentos de triagem visual em eventos",
+    "title": "Protocolos de triagem visual e encaminhamento responsável",
     "desc": "Conheça finalidade, preparação, limitações e comunicação adequada dos resultados de equipamentos de triagem.",
     "time": "1h30",
     "units": [
@@ -499,15 +499,15 @@ const additionalCourses = [
 const courseChronologyTitles = [
   "Anatomia e funcionamento do sistema visual",
   "Leitura de receitas ópticas",
-  "Visão simples, bifocal e multifocal",
+  "Fundamentos da óptica geométrica e formação da imagem",
   "Tratamentos e tecnologias das lentes",
   "Materiais, índices de refração e espessura",
   "Multifocais: corredores, campos visuais e adaptação",
-  "Medidas ópticas e centragem",
+  "Conferência técnica de pedidos e parâmetros de montagem",
   "DNP, DP e centragem",
   "Anatomia, medidas e materiais das armações",
   "Armações, rostos e materiais",
-  "Visagismo óptico e escolha de armações",
+  "Ajuste, anatomia e ergonomia das armações",
   "Equipamentos de uma ótica: uso, momento e cuidados",
   "Limpeza e manutenção dos óculos",
   "Laboratório óptico e controle de qualidade",
@@ -520,7 +520,7 @@ const courseChronologyTitles = [
   "Gestão financeira e indicadores de uma ótica",
   "Sistemas digitais, cadastro e proteção de dados",
   "Liderança e treinamento de equipes de ótica",
-  "Equipamentos de triagem visual em eventos"
+  "Protocolos de triagem visual e encaminhamento responsável"
 ];
 const normalizeCourseTitle = value => String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
 const courseChronologyRank = new Map(courseChronologyTitles.map((title,index)=>[normalizeCourseTitle(title),index]));
