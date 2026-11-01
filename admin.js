@@ -74,24 +74,74 @@
   async function loadCourses() {
     let data = await request('/api/courses?all=true');
     let courses = data.courses || [];
-    if (!courses.length) {
-      try {
-        const staticCatalog = (typeof window !== 'undefined' && Array.isArray(window.universidadeMBCatalog)) ? window.universidadeMBCatalog : null;
-        if (staticCatalog?.length) {
-          for (let index=0; index<staticCatalog.length; index++) {
-            const item=staticCatalog[index];
-            const payload={id:item.id,slug:slugify(item.title),title:item.title,description:item.desc||'',level:item.level||'Fundamentos',duration:item.time||'',icon:item.icon||'📘',sort_order:index,status:'published'};
-            await request('/api/courses',{method:'POST',body:json(payload)});
-            for (let unitIndex=0; unitIndex<(item.units||[]).length; unitIndex++) {
-              const unit=item.units[unitIndex];
-              await request('/api/courses/'+encodeURIComponent(item.id)+'/modules',{method:'POST',body:json({title:unit[0],content_html:unit[1],sort_order:unitIndex})});
-            }
-          }
-          data = await request('/api/courses?all=true');
-          courses = data.courses || [];
-          sayEditor('Catálogo inicial migrado para o banco central.');
+    try {
+      const staticCatalog = (typeof window !== 'undefined' && Array.isArray(window.universidadeMBCatalog)) ? window.universidadeMBCatalog : [];
+      const canonicalTitles = [
+        'Leitura de receitas ópticas',
+        'Visão simples, bifocal e multifocal',
+        'Armações, rostos e materiais',
+        'DNP, DP e centragem',
+        'Equipamentos de uma ótica: uso, momento e cuidados',
+        'Limpeza e manutenção dos óculos',
+        'Anatomia e funcionamento do sistema visual',
+        'Tratamentos e tecnologias das lentes',
+        'Materiais, índices de refração e espessura',
+        'Multifocais: corredores, campos visuais e adaptação',
+        'Medidas ópticas e centragem',
+        'Anatomia, medidas e materiais das armações',
+        'Visagismo óptico e escolha de armações',
+        'Laboratório óptico e controle de qualidade',
+        'Atendimento consultivo em óptica',
+        'Atendimento consultivo ao cliente',
+        'Experiência do cliente e fidelização',
+        'Venda técnica ética e apresentação de orçamentos',
+        'Situações difíceis e resolução de conflitos',
+        'Estoque, compras e fornecedores',
+        'Gestão financeira e indicadores de uma ótica',
+        'Sistemas digitais, cadastro e proteção de dados',
+        'Liderança e treinamento de equipes de ótica',
+        'Equipamentos de triagem visual em eventos'
+      ];
+      const known = new Set(courses.map(c => String(c.title || '').trim().toLocaleLowerCase('pt-BR')));
+      let restored = 0;
+      for (let index=0; index<canonicalTitles.length; index++) {
+        const title = canonicalTitles[index];
+        if (known.has(title.toLocaleLowerCase('pt-BR'))) continue;
+        const item = staticCatalog.find(c => String(c.title || '').trim().toLocaleLowerCase('pt-BR') === title.toLocaleLowerCase('pt-BR'));
+        const slug = slugify(title);
+        const payload = {
+          ...(item?.id ? {id:item.id} : {}),
+          slug, title,
+          description: item?.desc || 'Curso integrante da trilha formativa da Universidade MB.',
+          level: item?.level || 'Fundamentos',
+          duration: item?.time || '',
+          icon: item?.icon || '📘',
+          sort_order: index,
+          status: 'published'
+        };
+        const created = await request('/api/courses', {method:'POST',body:json(payload)});
+        const createdCourse = created.course || created;
+        const courseId = createdCourse.id || payload.id || slug;
+        const units = item?.units?.length ? item.units : [[
+          'Conteúdo do curso',
+          '<p>Curso restaurado ao catálogo central da Universidade MB.</p><p>Este curso precisa ter seus materiais e avaliações conferidos no editor administrativo antes de ser considerado pedagogicamente homologado.</p>'
+        ]];
+        for (let unitIndex=0; unitIndex<units.length; unitIndex++) {
+          const unit = units[unitIndex];
+          await request('/api/courses/'+encodeURIComponent(courseId)+'/modules', {method:'POST',body:json({title:unit[0],content_html:unit[1],sort_order:unitIndex})});
         }
-      } catch (e) { sayEditor('O catálogo ainda não foi migrado: '+e.message); }
+        known.add(title.toLocaleLowerCase('pt-BR'));
+        restored++;
+      }
+      if (restored) {
+        data = await request('/api/courses?all=true');
+        courses = data.courses || [];
+        sayEditor('Catálogo reconciliado: '+restored+' curso(s) restaurado(s). Revise os conteúdos dos cursos que estavam ausentes.');
+      }
+    } catch (e) {
+      sayEditor('A restauração automática do catálogo foi interrompida: '+e.message+'. Os cursos existentes foram preservados.');
+      data = await request('/api/courses?all=true');
+      courses = data.courses || [];
     }
     const total = courses.length;
     $('dashTotalCourses').textContent = total;
