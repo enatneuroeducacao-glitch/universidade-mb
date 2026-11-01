@@ -19,7 +19,7 @@
     $('adminFirstSetup').textContent = first ? 'Cancelar configuração inicial' : 'Primeiro acesso';
     $('adminLogin').textContent = first ? 'Criar administrador' : 'Entrar';
     $('adminPassword').autocomplete = first ? 'new-password' : 'current-password';
-    $('adminAuthMessage').textContent = first ? 'Crie a conta inicial com o token fornecido no servidor. A senha deve ter pelo menos 12 caracteres.' : '';
+    $('adminAuthMessage').textContent = first ? 'Crie a conta inicial com o token fornecido no servidor. A senha deve ter pelo menos 6 caracteres.' : '';
   }
   async function setup() {
     try {
