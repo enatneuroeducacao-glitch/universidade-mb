@@ -110,7 +110,7 @@
         const item = staticCatalog.find(c => String(c.title || '').trim().toLocaleLowerCase('pt-BR') === title.toLocaleLowerCase('pt-BR'));
         const slug = slugify(title);
         const payload = {
-          ...(item?.id ? {id:item.id} : {}),
+          id: item?.id || slug,
           slug, title,
           description: item?.desc || 'Curso integrante da trilha formativa da Universidade MB.',
           level: item?.level || 'Fundamentos',
