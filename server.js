@@ -87,7 +87,7 @@ app.post('/api/admin/bootstrap', loginLimiter, async (req, res) => {
   if (!supplied || supplied !== process.env.ADMIN_BOOTSTRAP_TOKEN) return res.status(403).json({ error: 'Token de inicialização inválido.' });
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
-  if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 12) return res.status(400).json({ error: 'Informe e-mail válido e senha com pelo menos 12 caracteres.' });
+  if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 6) return res.status(400).json({ error: 'Informe e-mail válido e senha com pelo menos 12 caracteres.' });
   const count = await pool.query('SELECT COUNT(*)::int AS count FROM admin_users');
   if (count.rows[0].count > 0) return res.status(409).json({ error: 'O administrador inicial já foi criado. Use o login.' });
   const hash = await bcrypt.hash(password, 12);
