@@ -82,6 +82,13 @@ async function initialize() {
     progress JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_learner_progress_updated ON learner_progress(updated_at DESC)');
+  await pool.query(`CREATE TABLE IF NOT EXISTS learner_certificates (
+    id BIGSERIAL PRIMARY KEY, learner_id TEXT NOT NULL, course_id TEXT NOT NULL DEFAULT '__program__',
+    certificate_code TEXT NOT NULL UNIQUE, certificate_title TEXT NOT NULL, participant_name TEXT NOT NULL,
+    issued_by BIGINT REFERENCES admin_users(id) ON DELETE SET NULL, issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(learner_id, course_id)
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_learner_certificates_learner ON learner_certificates(learner_id, issued_at DESC)');
   await pool.query(`CREATE TABLE IF NOT EXISTS learners (
     id BIGSERIAL PRIMARY KEY, full_name TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -159,6 +166,32 @@ app.post('/api/progress/sync', async (req,res) => {
 app.get('/api/admin/learner-progress', requireAdmin, async (req,res) => {
   const result = await pool.query('SELECT learner_id,display_name,email,progress,updated_at FROM learner_progress ORDER BY updated_at DESC LIMIT 500');
   res.json({ learners: result.rows });
+});
+app.get('/api/admin/certificates', requireAdmin, async (req,res) => {
+  const result=await pool.query('SELECT learner_id,course_id,certificate_code,certificate_title,participant_name,issued_at FROM learner_certificates ORDER BY issued_at DESC LIMIT 500');
+  res.json({certificates:result.rows});
+});
+app.post('/api/admin/certificates/program/:learnerId', requireAdmin, loginLimiter, async (req,res) => {
+  if(req.session.admin.role!=='admin') return res.status(403).json({error:'Somente administrador pode emitir certificados.'});
+  const learnerId=String(req.params.learnerId||'');
+  const learner=await pool.query('SELECT id,full_name,email,is_active FROM learners WHERE id::text=$1',[learnerId]);
+  if(!learner.rowCount||!learner.rows[0].is_active) return res.status(404).json({error:'Participante não encontrado ou inativo.'});
+  const progressResult=await pool.query('SELECT progress FROM learner_progress WHERE learner_id=$1',[learnerId]);
+  if(!progressResult.rowCount) return res.status(409).json({error:'O participante ainda não sincronizou o progresso.'});
+  const progress=progressResult.rows[0].progress||{};
+  const published=await pool.query("SELECT id,title FROM courses WHERE status='published' ORDER BY sort_order,title");
+  if(!published.rowCount) return res.status(409).json({error:'Não há cursos publicados para validar a conclusão.'});
+  const completed=new Set(Array.isArray(progress.completed)?progress.completed:[]);
+  const passed=progress.modulePassed&&typeof progress.modulePassed==='object'?progress.modulePassed:{};
+  const missing=published.rows.filter(course=>!completed.has(course.id)||passed[course.id]!==true);
+  if(missing.length) return res.status(409).json({error:'Certificado indisponível. O participante precisa concluir e ser aprovado em todos os '+published.rowCount+' cursos publicados.',missing_courses:missing.map(c=>c.title)});
+  const existing=await pool.query("SELECT learner_id,course_id,certificate_code,certificate_title,participant_name,issued_at FROM learner_certificates WHERE learner_id=$1 AND course_id='__program__'",[learnerId]);
+  if(existing.rowCount) return res.json({certificate:existing.rows[0],already_issued:true});
+  const code='UMB-'+new Date().getFullYear()+'-'+require('crypto').randomBytes(5).toString('hex').toUpperCase();
+  const title='Programa completo de formação em óptica';
+  const created=await pool.query("INSERT INTO learner_certificates(learner_id,course_id,certificate_code,certificate_title,participant_name,issued_by) VALUES($1,'__program__',$2,$3,$4,$5) RETURNING learner_id,course_id,certificate_code,certificate_title,participant_name,issued_at",[learnerId,code,title,learner.rows[0].full_name,req.session.admin.id]);
+  await audit(req.session.admin.id,'issue_certificate','learner_certificate',code,{learner_id:learnerId,certificate_title:title});
+  res.status(201).json({certificate:created.rows[0],already_issued:false});
 });
 app.get('/api/courses', async (req, res) => {
   const publishedOnly = req.query.all !== 'true';
