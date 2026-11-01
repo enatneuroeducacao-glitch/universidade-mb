@@ -623,3 +623,4 @@ const isQuarterDiopter=v=>Number.isFinite(v)&&Math.abs(v*4-Math.round(v*4))<1e-8
     console.warn('Não foi possível atualizar o catálogo publicado; mantendo a versão local.', error);
   }
 })();
+refreshLearnerAccount();
