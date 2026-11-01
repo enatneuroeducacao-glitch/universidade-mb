@@ -93,6 +93,11 @@
         }
       } catch (e) { sayEditor('O catálogo ainda não foi migrado: '+e.message); }
     }
+    const total = courses.length;
+    $('dashTotalCourses').textContent = total;
+    $('dashPublishedCourses').textContent = courses.filter(c => c.status === 'published').length;
+    $('dashDraftCourses').textContent = courses.filter(c => c.status === 'draft').length;
+    $('dashArchivedCourses').textContent = courses.filter(c => c.status === 'archived').length;
     const list = $('adminCourseList');
     list.replaceChildren();
     if (!courses.length) {
@@ -101,11 +106,38 @@
       return;
     }
     courses.forEach(course => {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = 'secondary'; button.style.textAlign = 'left'; button.style.width = '100%';
-      button.textContent = course.title + ' · ' + (course.status === 'published' ? 'Publicado' : course.status === 'archived' ? 'Arquivado' : 'Rascunho');
-      button.addEventListener('click', () => fillCourse(course));
-      list.appendChild(button);
+      const row = document.createElement('div');
+      row.style.cssText = 'border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;background:var(--paper)';
+      const select = document.createElement('button');
+      select.type = 'button'; select.className = 'secondary'; select.style.cssText = 'text-align:left;width:100%;white-space:normal';
+      const statusLabel = course.status === 'published' ? 'Publicado' : course.status === 'archived' ? 'Arquivado' : 'Rascunho';
+      select.textContent = course.title + ' · ' + statusLabel + ' · ' + (course.modules || []).length + ' módulos';
+      select.addEventListener('click', () => fillCourse(course));
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+      const archive = document.createElement('button');
+      archive.type = 'button'; archive.className = 'secondary'; archive.textContent = course.status === 'archived' ? 'Restaurar rascunho' : 'Arquivar';
+      archive.addEventListener('click', async () => {
+        const nextStatus = course.status === 'archived' ? 'draft' : 'archived';
+        if (!confirm((nextStatus === 'archived' ? 'Arquivar' : 'Restaurar como rascunho') + ' o curso “' + course.title + '”?')) return;
+        try {
+          const payload = {slug:course.slug,title:course.title,description:course.description||'',level:course.level||'Fundamentos',duration:course.duration||'',icon:course.icon||'📘',sort_order:Number(course.sort_order||0),status:nextStatus};
+          await request('/api/courses/'+encodeURIComponent(course.id), {method:'PUT',body:json(payload)});
+          await loadCourses(); sayEditor(nextStatus === 'archived' ? 'Curso arquivado. Ele não aparece no catálogo público.' : 'Curso restaurado como rascunho.');
+        } catch (e) { sayEditor('Não foi possível alterar o curso: '+e.message); }
+      });
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'secondary'; del.textContent = 'Excluir';
+      del.style.cssText = 'border-color:#d8aaa3;color:#9f4438';
+      del.addEventListener('click', async () => {
+        if (!confirm('Excluir definitivamente o curso “' + course.title + '” e seus módulos? Esta ação não pode ser desfeita.')) return;
+        try {
+          await request('/api/courses/'+encodeURIComponent(course.id), {method:'DELETE'});
+          if (currentCourse?.id === course.id) newCourse();
+          await loadCourses(); sayEditor('Curso excluído.');
+        } catch (e) { sayEditor('Não foi possível excluir o curso: '+e.message); }
+      });
+      actions.append(archive,del); row.append(select,actions); list.appendChild(row);
     });
     if (currentCourse?.id) {
       const selected = courses.find(course => course.id === currentCourse.id);
