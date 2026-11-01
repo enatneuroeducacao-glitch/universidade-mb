@@ -1,101 +1,97 @@
 (() => {
-const copy=x=>JSON.parse(JSON.stringify(x));
-const original={eyebrow:document.querySelector('.hero .eyebrow').textContent,title:document.querySelector('.hero h1').textContent,description:document.querySelector('.hero p').textContent,footer:document.querySelector('footer').textContent,courses:copy(courses),quiz:copy(quiz),glossary:copy(glossary)};
-let data=copy(original);
-const json=()=>JSON.stringify(data,null,2), status=m=>document.getElementById('adminMessage').textContent=m;
-function validate(d){
- if(!d||!Array.isArray(d.courses)||!Array.isArray(d.quiz)||!Array.isArray(d.glossary))throw Error('O JSON precisa conter courses, quiz e glossary.');
- if(!d.courses.every(c=>c.id&&c.title&&c.desc&&Array.isArray(c.units)&&c.units.every(u=>Array.isArray(u)&&u.length===2)&&(!c.resources||Array.isArray(c.resources)&&c.resources.every(r=>r.title&&['document','image','video','link'].includes(r.type)&&(!r.url||/^https:\/\//i.test(r.url)||/^data:(image|video|application|text)\//i.test(r.url))||r.data))))throw Error('Curso inválido: confira identificador, título, descrição, unidades e materiais complementares.');
- if(!d.quiz.every(q=>q.q&&Array.isArray(q.a)&&q.a.length>=2&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<q.a.length&&q.why))throw Error('Questão inválida: confira enunciado, alternativas, resposta correta e explicação.');
- if(!d.glossary.every(g=>Array.isArray(g)&&g.length===2))throw Error('Item de glossário inválido.');
-}
-const courseChronologyTitles=[
-'Anatomia e funcionamento do sistema visual','Leitura de receitas ópticas','Visão simples, bifocal e multifocal','Tratamentos e tecnologias das lentes','Materiais, índices de refração e espessura','Multifocais: corredores, campos visuais e adaptação','Medidas ópticas e centragem','DNP, DP e centragem','Anatomia, medidas e materiais das armações','Armações, rostos e materiais','Visagismo óptico e escolha de armações','Equipamentos de uma ótica: uso, momento e cuidados','Limpeza e manutenção dos óculos','Laboratório óptico e controle de qualidade','Atendimento consultivo em óptica','Atendimento consultivo ao cliente','Experiência do cliente e fidelização','Situações difíceis e resolução de conflitos','Venda técnica ética e apresentação de orçamentos','Estoque, compras e fornecedores','Gestão financeira e indicadores de uma ótica','Sistemas digitais, cadastro e proteção de dados','Liderança e treinamento de equipes de ótica','Equipamentos de triagem visual em eventos'];
-function normalizeCourseTitle(value){return String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();}
-const courseChronologyRank=new Map(courseChronologyTitles.map((title,index)=>[normalizeCourseTitle(title),index]));
-function sortCoursesChronologically(list){return list.map((course,index)=>({course,index,rank:courseChronologyRank.has(normalizeCourseTitle(course.title))?courseChronologyRank.get(normalizeCourseTitle(course.title)):Number.MAX_SAFE_INTEGER})).sort((a,b)=>a.rank-b.rank||a.index-b.index).map(item=>item.course);}
-function apply(d){validate(d);d.courses=sortCoursesChronologically(d.courses);courses.splice(0,courses.length,...copy(d.courses));quiz.splice(0,quiz.length,...copy(d.quiz));glossary.splice(0,glossary.length,...copy(d.glossary));data={eyebrow:String(d.eyebrow||original.eyebrow),title:String(d.title||original.title),description:String(d.description||original.description),footer:String(d.footer||original.footer),courses:copy(courses),quiz:copy(quiz),glossary:copy(glossary)};document.querySelector('.hero .eyebrow').textContent=data.eyebrow;document.querySelector('.hero h1').textContent=data.title;document.querySelector('.hero p').textContent=data.description;document.querySelector('footer').textContent=data.footer;const published=courses.filter(isCoursePublic);document.getElementById('statCourses').textContent=published.length;document.getElementById('statLessons').textContent=published.reduce((n,c)=>n+c.units.length,0)}
-function setup(){
- if(document.getElementById('courseEditor'))return;
- let newQuizDraft=false;
- const panel=document.getElementById('adminContent').closest('.panel'), box=document.createElement('div');box.id='courseEditor';
- box.innerHTML=`<hr><h3>Gerenciar cursos</h3><p class="muted">Selecione um curso para editar ou excluir, ou limpe o formulário para criar outro. Use o editor visual para organizar cursos, aulas e materiais sem precisar escrever código.</p>
- <label>Curso existente<select id="cePick" style="display:block;width:100%;padding:10px;margin:6px 0 12px"></select></label>
- <div class="field"><label>Identificador</label><input id="ceId" style="width:100%;padding:10px"></div><div class="field"><label>Ícone do curso</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end"><div><label for="ceIconPick">Escolher ícone</label><select id="ceIconPick" style="width:100%;padding:10px"><option value="📘">📘 Livro</option><option value="👓">👓 Óculos</option><option value="🔍">🔍 Lupa</option><option value="🛠️">🛠️ Ferramentas</option><option value="🧠">🧠 Conhecimento</option><option value="💬">💬 Atendimento</option><option value="📐">📐 Medidas</option><option value="🧪">🧪 Técnica</option><option value="💼">💼 Gestão</option><option value="🎓">🎓 Formação</option><option value="🛡️">🛡️ Segurança</option><option value="⭐">⭐ Destaque</option></select></div><div><label for="ceIconFile">Ou anexar imagem (PNG, JPG ou WebP, até 100 KB)</label><input id="ceIconFile" type="file" accept="image/png,image/jpeg,image/webp" style="width:100%;padding:7px"></div></div><input id="ceIcon" type="hidden" value="📘"><div id="ceIconPreview" style="margin-top:8px;display:flex;align-items:center;gap:10px"><span>Pré-visualização:</span><span id="ceIconPreviewValue" style="font-size:28px">📘</span><button type="button" class="secondary" id="ceIconReset">Usar ícone selecionado</button></div><p class="muted">A imagem fica incorporada ao rascunho local. Para disponibilizar a todos, será necessário publicar os dados do curso no repositório.</p></div><div class="field"><label>Categoria</label><input id="ceLevel" style="width:100%;padding:10px"></div><div class="field"><label>Duração</label><input id="ceTime" style="width:100%;padding:10px"></div><div class="field"><label>Título</label><input id="ceTitle" style="width:100%;padding:10px"></div><div class="field"><label>Descrição</label><textarea id="ceDesc" rows="2" style="width:100%;padding:10px"></textarea></div><div class="fields" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"><div class="field"><label>Visibilidade no catálogo</label><select id="ceVisibility"><option value="published">Publicado no catálogo</option><option value="draft">Rascunho — não exibir</option><option value="hidden">Oculto do catálogo</option></select></div><div class="field"><label>Regra de acesso</label><select id="ceAccess"><option value="public">Acesso livre</option><option value="enrolled">Somente alunos matriculados</option><option value="restricted">Acesso restrito</option></select></div></div><div class="callout"><b>Importante:</b> as opções de acesso são configurações organizacionais. O bloqueio seguro por matrícula exige autenticação e permissões no servidor.</div><div class="field"><label>Aulas e conteúdos</label><p class="muted">Edite cada aula nos campos abaixo. O conteúdo aceita texto e formatação HTML simples.</p><div id="ceUnitsVisual"></div><button type="button" class="secondary" id="ceAddUnit">+ Adicionar aula</button><textarea id="ceUnits" class="hidden"></textarea></div>
- <div class="field"><label>Materiais complementares do curso</label><p class="muted">Adicione documentos PDF, imagens e vídeos por link ou selecione arquivos pequenos. Arquivos locais: até 1 MB por arquivo e 2 MB no total por curso. Para compartilhar com todos os alunos e evitar limite de armazenamento, use links públicos HTTPS.</p><div id="ceResourcesVisual"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary" id="ceAddResource">+ Adicionar material por link</button><label class="secondary" style="display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;cursor:pointer">Anexar arquivo<input id="ceResourceFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.mov" multiple style="display:none"></label></div><textarea id="ceResources" class="hidden"></textarea></div>
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px"><button class="primary" id="ceSave">Adicionar / atualizar curso</button><button class="danger" id="ceDelete">Excluir curso</button><button class="secondary" id="ceNew">Novo curso</button></div>
- <hr><h3>Gerenciar avaliações e provas</h3><p class="muted">Uma alternativa por linha. A resposta correta usa numeração começando em 1.</p><label>Questão existente<select id="qePick" style="display:block;width:100%;padding:10px;margin:6px 0 12px"></select></label>
- <div class="field"><label>Enunciado</label><textarea id="qeQ" rows="2" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Alternativas</label><textarea id="qeA" rows="4" style="width:100%;padding:10px"></textarea></div><div class="field"><label>Número da resposta correta</label><input id="qeCorrect" type="number" min="1" value="1" style="width:100%;padding:10px"></div><div class="field"><label>Explicação da resposta</label><textarea id="qeWhy" rows="3" style="width:100%;padding:10px"></textarea></div>
- <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:25px"><button class="primary" id="qeSave">Adicionar / atualizar questão</button><button class="danger" id="qeDelete">Excluir questão</button><button class="secondary" id="qeNew">Nova questão</button></div><hr>`;
- document.getElementById('adminContent').parentElement.insertAdjacentElement('beforebegin',box);
- // Mantém as ações principais do curso no topo do editor, acessíveis durante a edição.
- const courseActions=box.querySelector('#ceSave').parentElement;
- courseActions.classList.add('course-actions-top');
- const courseHeading=[...box.querySelectorAll('h3')].find(h=>h.textContent.trim()==='Gerenciar cursos');
- if(courseHeading) courseHeading.insertAdjacentElement('afterend',courseActions);
- const $=id=>document.getElementById(id), draft=()=>JSON.parse($('adminContent').value), put=d=>{$('adminContent').value=JSON.stringify(d,null,2);status('Rascunho atualizado. Clique em “Validar e salvar” para aplicar.');};
- function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
- function iconPreview(icon){return /^data:image\/(png|jpeg|webp);base64,/i.test(icon)?'<img src="'+icon+'" alt="Prévia do ícone" style="width:40px;height:40px;object-fit:contain;border-radius:8px">':escapeHtml(icon||'📘')}
- $('ceIconPick').onchange=()=>{$('ceIcon').value=$('ceIconPick').value;$('ceIconPreviewValue').innerHTML=iconPreview($('ceIcon').value);$('ceIconFile').value=''};
- $('ceIconReset').onclick=()=>{$('ceIcon').value=$('ceIconPick').value;$('ceIconPreviewValue').innerHTML=iconPreview($('ceIcon').value);$('ceIconFile').value=''};
- $('ceIconFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Formato inválido. Use PNG, JPG ou WebP.');e.target.value='';return}if(f.size>100*1024){status('A imagem do ícone deve ter no máximo 100 KB.');e.target.value='';return}try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(f)});$('ceIcon').value=data;$('ceIconPreviewValue').innerHTML=iconPreview(data);status('Ícone anexado ao rascunho. Salve o curso para guardar a alteração neste navegador.')}catch(err){status('Não foi possível ler a imagem.')}e.target.value=''};
- function addEditorStyles(){if($('adminEditorStyles'))return;const style=document.createElement('style');style.id='adminEditorStyles';style.textContent=`
-#courseEditor .course-actions-top{position:sticky;top:68px;z-index:4;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;margin:12px 0 18px;box-shadow:0 8px 22px #183a3018}
-#courseEditor .course-actions-top button{min-height:42px}
-#courseEditor .editor-card{border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;background:linear-gradient(180deg,#fff,#fcfbf8);box-shadow:0 5px 18px #183a3008}
-#courseEditor .editor-card>label{display:block;font-weight:750;margin:12px 0 5px}
-#courseEditor input:not([type=file]),#courseEditor select,#courseEditor textarea{width:100%;border:1px solid #d9dfd9;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink);font:14px/1.6 ui-sans-serif,system-ui,sans-serif;transition:border-color .15s,box-shadow .15s}
-#courseEditor input:focus,#courseEditor select:focus,#courseEditor textarea:focus{outline:none;border-color:var(--green2);box-shadow:0 0 0 3px #205a5018}
-#courseEditor textarea{resize:vertical;min-height:110px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
-#courseEditor .editor-toolbar{display:flex;gap:5px;flex-wrap:wrap;padding:8px;background:#f1f5f2;border:1px solid #dfe8e2;border-bottom:0;border-radius:10px 10px 0 0;margin-top:8px}
-#courseEditor .editor-toolbar button{border:1px solid #d5dfd8;background:#fff;color:#214c42;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:750}
-#courseEditor .editor-toolbar button:hover{background:#e3eee8}
-#courseEditor .editor-toolbar .toolbar-hint{font-size:11px;color:var(--muted);align-self:center;margin-left:auto}
-#courseEditor .editor-toolbar+textarea{border-radius:0 0 10px 10px;margin-top:0}
-#courseEditor .editor-preview{border:1px dashed #cbd9d0;border-radius:10px;padding:14px 16px;margin-top:8px;background:#fff;color:var(--ink);line-height:1.7}
-#courseEditor{color:#302820}
-#courseEditor .course-actions-top{background:#fffaf2;border-color:#e3d2ba}
-#courseEditor .editor-card,#courseEditor .lesson-editor-card{border:1px solid #e5d9c8;border-radius:16px;padding:18px;margin:16px 0;background:#fffdfa;box-shadow:0 5px 18px #3b2c1b08}
-#courseEditor .lesson-editor-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
-#courseEditor .lesson-number{display:inline-flex;background:#f4eadb;color:#805d2d;border-radius:7px;padding:7px 10px;font-size:11px;font-weight:800;letter-spacing:.09em}
-#courseEditor input:not([type=file]),#courseEditor select,#courseEditor textarea{border-color:#ded2c1;background:#fffdfa;color:#342e27}
-#courseEditor input:focus,#courseEditor select:focus,#courseEditor textarea:focus{border-color:#b1813f;box-shadow:0 0 0 3px #b1813f20}
-#courseEditor textarea{font-family:inherit;font-size:14px}
-#courseEditor .editor-toolbar,#courseEditor .rich-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px;background:#f7f2ea;border:1px solid #ded2c1;border-bottom:0;border-radius:10px 10px 0 0;margin-top:8px}
-#courseEditor .editor-toolbar button,#courseEditor .rich-toolbar button{background:#fffdfa;border:1px solid #e1d3c0;color:#5c442b;border-radius:7px;padding:7px 10px;font-size:12px}
-#courseEditor .rich-editor{min-height:240px;max-height:560px;overflow:auto;border:1px solid #ded2c1;border-radius:0 0 10px 10px;padding:18px;background:#fff;color:#2e2924;font:15px/1.8 Inter,ui-sans-serif,system-ui,sans-serif}
-#courseEditor .rich-editor:focus{outline:none;border-color:#b1813f;box-shadow:0 0 0 3px #b1813f20}
-#courseEditor .rich-editor h3{font-family:inherit;font-size:1.25rem;margin:1em 0 .4em;color:#5e452b}
-#courseEditor .rich-editor p{margin:.55em 0}
-#courseEditor .rich-editor ul,#courseEditor .rich-editor ol{padding-left:24px}
-#courseEditor .editor-help{font-size:12px;color:#817568;padding-top:8px}
-`;document.head.appendChild(style)}
-function editorToolbar(index){return '<div class="editor-toolbar"><button type="button" data-format="bold" data-editor="'+index+'"><b>Negrito</b></button><button type="button" data-format="italic" data-editor="'+index+'"><i>Itálico</i></button><button type="button" data-format="h3" data-editor="'+index+'">Título</button><button type="button" data-format="p" data-editor="'+index+'">Parágrafo</button><button type="button" data-format="ul" data-editor="'+index+'">• Lista</button><button type="button" data-format="ol" data-editor="'+index+'">1. Lista numerada</button><button type="button" data-format="callout" data-editor="'+index+'">Destaque</button><button type="button" data-format="link" data-editor="'+index+'">Inserir link</button><button type="button" data-preview="'+index+'">Pré-visualizar</button></div>'}
-function bindEditorTools(){const root=$('ceUnitsVisual');if(!root)return;root.querySelectorAll('[data-format]').forEach(btn=>btn.onclick=()=>{const i=btn.dataset.editor,area=root.querySelector('[data-unit-body="'+i+'"]');if(!area)return;area.focus();const f=btn.dataset.format;if(f==='bold'||f==='italic'){document.execCommand(f,false,null);return}if(f==='h3'||f==='p'){document.execCommand('formatBlock',false,f==='h3'?'h3':'p');return}if(f==='ul'||f==='ol'){document.execCommand(f==='ul'?'insertUnorderedList':'insertOrderedList',false,null);return}if(f==='callout'){const selected=window.getSelection()?.toString();document.execCommand('insertHTML',false,'<div class="callout">'+(selected||'Texto em destaque')+'</div>');return}if(f==='link'){const url=prompt('Cole o endereço HTTPS do link:','https://');if(!url||!/^https:\/\//i.test(url)){if(url)status('Use um endereço iniciado por https://.');return}document.execCommand('createLink',false,url)}});root.querySelectorAll('[data-preview]').forEach(btn=>btn.onclick=()=>{const i=btn.dataset.preview,area=root.querySelector('[data-unit-body="'+i+'"]');let preview=root.querySelector('[data-preview-box="'+i+'"]');if(preview){preview.remove();btn.textContent='Pré-visualizar';return}preview=document.createElement('div');preview.className='editor-preview';preview.dataset.previewBox=i;preview.innerHTML=area.innerHTML;area.insertAdjacentElement('afterend',preview);btn.textContent='Fechar prévia'})}
- function renderUnits(){const root=$('ceUnitsVisual');if(!root)return;addEditorStyles();let units=[];try{units=JSON.parse($('ceUnits').value||'[]')}catch(e){}root.innerHTML=units.map((u,i)=>'<article class="lesson-editor-card"><header class="lesson-editor-head"><span class="lesson-number">AULA '+String(i+1).padStart(2,'0')+'</span><button type="button" class="danger" data-remove-unit="'+i+'">Remover aula</button></header><label>Título da aula</label><input data-unit-title="'+i+'" value="'+escapeHtml(u[0])+'" placeholder="Ex.: Introdução ao tema"><label>Conteúdo da aula</label><div class="rich-toolbar">'+editorToolbar(i)+'</div><div data-unit-body="'+i+'" class="rich-editor" contenteditable="true" role="textbox" aria-label="Conteúdo da aula '+(i+1)+'" aria-multiline="true" spellcheck="true">'+(u[1]||'<p></p>')+'</div><div class="editor-help">Clique no texto para editar e selecione trechos antes de aplicar a formatação.</div></article>').join('');root.querySelectorAll('[data-remove-unit]').forEach(b=>b.onclick=()=>{syncUnits();const d=JSON.parse($('ceUnits').value||'[]');d.splice(Number(b.dataset.removeUnit),1);$('ceUnits').value=JSON.stringify(d);renderUnits()});bindEditorTools()}
- function syncUnits(){const root=$('ceUnitsVisual');if(!root)return;const units=[...root.querySelectorAll('[data-unit-title]')].map((el,i)=>[el.value,root.querySelector('[data-unit-body="'+i+'"]').innerHTML]);$('ceUnits').value=JSON.stringify(units)}
- function fillC(c){$('ceId').value=c?.id||'';$('ceIcon').value=c?.icon||'📘';if($('ceIconPick'))$('ceIconPick').value=(c?.icon&&c.icon.startsWith('data:image/'))?'📘':(c?.icon||'📘');if($('ceIconPreviewValue'))$('ceIconPreviewValue').innerHTML=iconPreview(c?.icon||'📘');$('ceLevel').value=c?.level||'';$('ceTime').value=c?.time||'';$('ceTitle').value=c?.title||'';$('ceDesc').value=c?.desc||'';if($('ceVisibility'))$('ceVisibility').value=c?.visibility||'published';if($('ceAccess'))$('ceAccess').value=c?.access||'public';$('ceUnits').value=JSON.stringify(c?.units||[],null,2);$('ceResources').value=JSON.stringify(c?.resources||[]);renderUnits();renderResources();const save=$('ceSave');if(save)save.textContent=c?'Salvar alterações do curso':'Criar curso';const del=$('ceDelete');if(del)del.disabled=!c}
- function renderResources(){const root=$('ceResourcesVisual');if(!root)return;let list=[];try{list=JSON.parse($('ceResources').value||'[]')}catch(e){}root.innerHTML=list.map((r,i)=>'<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong>Material '+(i+1)+'</strong><button type="button" class="danger" data-remove-resource="'+i+'">Excluir material</button></div><label>Nome do material</label><input data-resource-title="'+i+'" value="'+escapeHtml(r.title||'')+'" style="width:100%;padding:10px;margin:6px 0"><label>Tipo</label><select data-resource-type="'+i+'" style="width:100%;padding:10px;margin:6px 0"><option value="document" '+(r.type==='document'?'selected':'')+'>Documento / PDF</option><option value="image" '+(r.type==='image'?'selected':'')+'>Foto / imagem</option><option value="video" '+(r.type==='video'?'selected':'')+'>Vídeo</option><option value="link" '+(!['document','image','video'].includes(r.type)?'selected':'')+'>Link / outro material</option></select><label>URL do arquivo (HTTPS) ou arquivo anexado</label><input data-resource-url="'+i+'" value="'+escapeHtml(r.url||'')+'" placeholder="https://..." style="width:100%;padding:10px;margin:6px 0"><small class="muted">'+(r.data?'Arquivo anexado neste navegador':(r.url?'Material por link':'Informe uma URL ou anexe um arquivo'))+'</small></div>').join('');root.querySelectorAll('[data-remove-resource]').forEach(b=>b.onclick=()=>{syncResources();const d=JSON.parse($('ceResources').value||'[]');d.splice(Number(b.dataset.removeResource),1);$('ceResources').value=JSON.stringify(d);renderResources()})}
- function syncResources(){const root=$('ceResourcesVisual');if(!root)return;const old=JSON.parse($('ceResources').value||'[]');const next=[...root.querySelectorAll('[data-resource-title]')].map((el,i)=>({title:el.value.trim(),type:root.querySelector('[data-resource-type="'+i+'"]').value,url:root.querySelector('[data-resource-url="'+i+'"]').value.trim(),...(old[i]?.data?{data:old[i].data}:{}),...(old[i]?.fileName?{fileName:old[i].fileName}:{})}));$('ceResources').value=JSON.stringify(next)}
- $('ceAddResource').onclick=()=>{syncResources();const d=JSON.parse($('ceResources').value||'[]');d.push({title:'Novo material',type:'document',url:''});$('ceResources').value=JSON.stringify(d);renderResources()};
- $('ceResourceFile').onchange=async e=>{const files=[...(e.target.files||[])];try{syncResources();const d=JSON.parse($('ceResources').value||'[]');for(const f of files){if(f.size>1024*1024)throw Error('O arquivo "'+f.name+'" excede 1 MB. Para arquivos maiores, especialmente vídeos, use um link HTTPS.');if(d.reduce((n,r)=>n+(r.data?Math.max(0,Math.round((r.data.length*3)/4)):0),0)+f.size>2*1024*1024)throw Error('Os anexos locais deste curso não podem ultrapassar 2 MB no total. Para mais arquivos, use links HTTPS.');const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)});const type=f.type.startsWith('image/')?'image':f.type.startsWith('video/')?'video':'document';d.push({title:f.name,type,url:'',data,fileName:f.name,mimeType:f.type})}$('ceResources').value=JSON.stringify(d);renderResources();status('Arquivo(s) anexado(s) ao rascunho. Salve o curso e depois valide e salve o conteúdo.')}catch(err){status('Não foi possível anexar: '+err.message)}e.target.value=''};
- function fillQ(q){$('qeQ').value=q?.q||'';$('qeA').value=(q?.a||['','']).join('\n');$('qeCorrect').value=q?q.correct+1:1;$('qeWhy').value=q?.why||''}
- function picks(d){$('cePick').innerHTML='<option value="">Selecione um curso para editar…</option>'+d.courses.map((c,i)=>'<option value="'+i+'">'+c.title.replace(/</g,'&lt;')+'</option>').join('');$('qePick').innerHTML='<option value="">Selecione uma questão…</option>'+d.quiz.map((q,i)=>'<option value="'+i+'">'+(i+1)+'. '+q.q.replace(/</g,'&lt;')+'</option>').join('');$('cePick').value='';$('qePick').value='';fillC(null);fillQ(null)}
- $('cePick').onchange=()=>{const v=$('cePick').value;if(v===''){fillC(null);return}fillC(draft().courses[Number(v)])};
- $('qePick').onchange=()=>{const v=$('qePick').value;if(v===''){newQuizDraft=false;fillQ(null);return}newQuizDraft=false;fillQ(draft().quiz[Number(v)]);};
- $('ceNew').onclick=()=>{ $('cePick').value='';fillC(null);$('ceId').value='curso-'+Date.now().toString(36);$('ceLevel').value='Fundamentos';$('ceTime').value='30 min';$('ceUnits').value=JSON.stringify([['Nova aula','<p>Escreva aqui o conteúdo da aula.</p>']]);renderUnits();$('ceTitle').focus()};
- $('ceAddUnit').onclick=()=>{syncUnits();const units=JSON.parse($('ceUnits').value||'[]');units.push(['Nova aula','<p>Escreva aqui o conteúdo da aula.</p>']);$('ceUnits').value=JSON.stringify(units);renderUnits()};
- $('ceSave').onclick=()=>{try{syncUnits();const d=draft(),id=$('ceId').value.trim(),c={id,icon:$('ceIcon').value.trim()||'📘',level:$('ceLevel').value.trim()||'Fundamentos',time:$('ceTime').value.trim()||'30 min',title:$('ceTitle').value.trim(),desc:$('ceDesc').value.trim(),visibility:$('ceVisibility')?.value||'published',access:$('ceAccess')?.value||'public',units:JSON.parse($('ceUnits').value),resources:(syncResources(),JSON.parse($('ceResources').value||'[]'))};if(!id||!c.title||!c.desc||!Array.isArray(c.units)||!c.units.every(u=>Array.isArray(u)&&u.length===2)||!Array.isArray(c.resources)||!c.resources.every(r=>r.title&&['document','image','video','link'].includes(r.type)&&(!r.url||/^https:\/\//i.test(r.url)||/^data:(image|video|application|text)\//i.test(r.url))||r.data))throw Error('Confira os campos do curso e dos materiais. Links externos devem usar HTTPS.');const i=d.courses.findIndex(x=>x.id===id);if(i<0)d.courses.push(c);else d.courses[i]=c;put(d);picks(d);$('cePick').value=String(d.courses.findIndex(x=>x.id===id));fillC(c)}catch(e){status('Erro no curso: '+e.message)}};
- $('ceDelete').onclick=()=>{try{const d=draft(),i=Number($('cePick').value);if(!d.courses[i]||!confirm('Excluir este curso do rascunho?'))return;d.courses.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
- $('qeNew').onclick=()=>{newQuizDraft=true;fillQ(null);};
- $('qeSave').onclick=()=>{try{const d=draft(),q={q:$('qeQ').value.trim(),a:$('qeA').value.split('\n').map(x=>x.trim()).filter(Boolean),correct:Number($('qeCorrect').value)-1,why:$('qeWhy').value.trim()};if(!q.q||q.a.length<2||!q.why||!Number.isInteger(q.correct)||q.correct<0||q.correct>=q.a.length)throw Error('Preencha enunciado, 2 ou mais alternativas, resposta correta e explicação.');const i=Number($('qePick').value);if(!newQuizDraft&&$('qePick').value!==''&&d.quiz[i])d.quiz[i]=q;else d.quiz.push(q);newQuizDraft=false;put(d);picks(d);$('qePick').value=String(d.quiz.findIndex(x=>x.q===q.q));fillQ(q)}catch(e){status('Erro na questão: '+e.message)}};
- $('qeDelete').onclick=()=>{try{const d=draft(),i=Number($('qePick').value);if(!d.quiz[i]||!confirm('Excluir esta questão do rascunho?'))return;d.quiz.splice(i,1);put(d);picks(d)}catch(e){status(e.message)}};
- picks(JSON.parse($('adminContent').value));
-}
-document.getElementById('adminTop').addEventListener('click',()=>{showView('admin');document.getElementById('adminContent').value=json();setup();status('Selecione um curso para editar ou use “Novo curso” para começar.');});
-document.getElementById('adminApply').addEventListener('click',()=>{try{apply(JSON.parse(document.getElementById('adminContent').value));localStorage.setItem('universidadeMB.content.v1',json());renderCourses(document.getElementById('courseSearch').value);renderGlossary(document.getElementById('glossarySearch').value);renderStats();renderQuiz();status('Conteúdo validado e salvo neste navegador. Para disponibilizar as alterações a todos os alunos, ainda é necessário publicar a atualização do conteúdo.');}catch(e){status('Erro de validação: '+e.message)}});
-document.getElementById('adminExport').addEventListener('click',()=>{try{const d=JSON.parse(document.getElementById('adminContent').value);validate(d);const u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='universidade-mb-conteudo.json';a.click();URL.revokeObjectURL(u);status('JSON exportado.');}catch(e){status('Não foi possível exportar: '+e.message)}});
-document.getElementById('adminImportFile').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const d=JSON.parse(await f.text());validate(d);document.getElementById('adminContent').value=JSON.stringify(d,null,2);setup();status('JSON importado no rascunho. Clique em Validar e salvar.')}catch(err){status('Arquivo inválido: '+err.message)}e.target.value=''});
-document.getElementById('adminReset').addEventListener('click',()=>{if(!confirm('Restaurar conteúdo original? Isso apaga alterações locais.'))return;localStorage.removeItem('universidadeMB.content.v1');apply(original);document.getElementById('adminContent').value=json();renderCourses();renderGlossary();renderStats();renderQuiz();status('Conteúdo original restaurado neste navegador.')});
-try{const saved=localStorage.getItem('universidadeMB.content.v1');if(saved){const d=JSON.parse(saved);if(!Array.isArray(d.quiz))d.quiz=copy(original.quiz);apply(d);renderCourses();renderGlossary();renderStats();renderQuiz()}}catch(e){console.warn('Conteúdo local não carregado:',e)}
+  const $ = id => document.getElementById(id);
+  const copy = value => JSON.parse(JSON.stringify(value));
+  const original = {
+    courses: copy(courses),
+    quiz: copy(quiz),
+    glossary: copy(glossary),
+    eyebrow: document.querySelector('.hero .eyebrow').textContent,
+    title: document.querySelector('.hero h1').textContent,
+    description: document.querySelector('.hero p').textContent,
+    footer: document.querySelector('footer').textContent
+  };
+  const message = text => { $('adminMessage').textContent = text; };
+  const payload = () => JSON.stringify({
+    courses, quiz, glossary,
+    eyebrow: document.querySelector('.hero .eyebrow').textContent,
+    title: document.querySelector('.hero h1').textContent,
+    description: document.querySelector('.hero p').textContent,
+    footer: document.querySelector('footer').textContent
+  }, null, 2);
+  function validate(data) {
+    if (!data || !Array.isArray(data.courses) || !Array.isArray(data.quiz) || !Array.isArray(data.glossary)) throw new Error('O JSON deve conter courses, quiz e glossary.');
+    if (data.courses.length !== 24) throw new Error('O catálogo deve conter exatamente 24 cursos. Cursos encontrados: ' + data.courses.length + '.');
+    const ids = data.courses.map(course => course.id);
+    if (ids.some(id => !id) || new Set(ids).size !== ids.length) throw new Error('Cada curso precisa ter um identificador único.');
+    if (!data.courses.every(course => course.title && course.desc && Array.isArray(course.units) && course.units.length && course.units.every(unit => Array.isArray(unit) && unit.length === 2))) throw new Error('Confira título, descrição e unidades de cada curso.');
+    if (!data.quiz.every(item => item.q && Array.isArray(item.a) && item.a.length >= 2 && Number.isInteger(item.correct) && item.correct >= 0 && item.correct < item.a.length && item.why)) throw new Error('Há questões de avaliação inválidas.');
+    if (!data.glossary.every(item => Array.isArray(item) && item.length === 2)) throw new Error('Há itens inválidos no glossário.');
+  }
+  function apply(data) {
+    validate(data);
+    courses.splice(0, courses.length, ...copy(data.courses));
+    quiz.splice(0, quiz.length, ...copy(data.quiz));
+    glossary.splice(0, glossary.length, ...copy(data.glossary));
+    if (data.eyebrow) document.querySelector('.hero .eyebrow').textContent = data.eyebrow;
+    if (data.title) document.querySelector('.hero h1').textContent = data.title;
+    if (data.description) document.querySelector('.hero p').textContent = data.description;
+    if (data.footer) document.querySelector('footer').textContent = data.footer;
+    renderCourses($('courseSearch')?.value || '');
+    renderGlossary($('glossarySearch')?.value || '');
+    renderStats();
+    renderQuiz();
+  }
+  $('adminTop').addEventListener('click', () => {
+    $('adminContent').value = payload();
+    showView('admin');
+    message('Portal administrativo aberto. Edite o JSON e valide antes de salvar.');
+  });
+  $('adminBack').addEventListener('click', () => showView('courses'));
+  $('adminApply').addEventListener('click', () => {
+    try {
+      const data = JSON.parse($('adminContent').value);
+      apply(data);
+      localStorage.setItem('universidadeMB.content.v1', JSON.stringify(data));
+      $('adminContent').value = payload();
+      message('Conteúdo validado e salvo neste navegador. Isso não publica alterações para outros alunos.');
+    } catch (error) {
+      message('Não foi possível salvar: ' + error.message);
+    }
+  });
+  $('adminExport').addEventListener('click', () => {
+    try {
+      const data = JSON.parse($('adminContent').value);
+      validate(data);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = 'universidade-mb-conteudo.json'; link.click();
+      URL.revokeObjectURL(url);
+      message('Arquivo JSON exportado.');
+    } catch (error) { message('Não foi possível exportar: ' + error.message); }
+  });
+  $('adminImportFile').addEventListener('change', async event => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      validate(data);
+      $('adminContent').value = JSON.stringify(data, null, 2);
+      message('Arquivo carregado no editor. Clique em validar e salvar para aplicar neste navegador.');
+    } catch (error) { message('Arquivo inválido: ' + error.message); }
+    event.target.value = '';
+  });
+  $('adminReset').addEventListener('click', () => {
+    if (!confirm('Restaurar o conteúdo que está publicado no código? As alterações locais serão perdidas.')) return;
+    localStorage.removeItem('universidadeMB.content.v1');
+    apply(original);
+    $('adminContent').value = payload();
+    message('Conteúdo original restaurado neste navegador.');
+  });
+  try {
+    const saved = localStorage.getItem('universidadeMB.content.v1');
+    if (saved) {
+      const data = JSON.parse(saved);
+      apply(data);
+    }
+  } catch (error) { console.warn('Conteúdo administrativo local não carregado:', error); }
 })();
