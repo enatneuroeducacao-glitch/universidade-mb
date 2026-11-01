@@ -62,25 +62,63 @@
   async function loadLearnerProgress() {
     const status=$('learnerProgressStatus'), list=$('learnerProgressList');
     if(!status||!list)return;
-    status.textContent='Consultando registros do servidor...';
+    status.textContent='Consultando progresso e certificados...';
     try {
-      const data=await request('/api/admin/learner-progress');
-      const learners=data.learners||[];
-      status.textContent=learners.length+' participante(s) com progresso sincronizado.';
+      const [data,certificateData]=await Promise.all([
+        request('/api/admin/learner-progress'),
+        request('/api/admin/certificates')
+      ]);
+      const learners=data.learners||[], certificates=certificateData.certificates||[];
+      status.textContent=learners.length+' participante(s) · '+certificates.length+' certificado(s) emitido(s).';
       list.replaceChildren();
-      if(!learners.length){list.innerHTML='<p class="tagline">Ainda não há registros sincronizados.</p>';return;}
+      if(!learners.length){list.innerHTML='<p class="tagline">Ainda não há registros sincronizados. O progresso aparecerá após o aluno entrar na conta e estudar.</p>';return;}
       learners.forEach(learner=>{
         const progress=learner.progress||{};
-        const completed=Array.isArray(progress.completed)?progress.completed.length:0;
-        const passed=progress.modulePassed&&typeof progress.modulePassed==='object'?Object.values(progress.modulePassed).filter(Boolean).length:0;
-        const row=document.createElement('div');
-        row.style.cssText='border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:4px;background:var(--paper)';
+        const completed=Array.isArray(progress.completed)?progress.completed:[];
+        const passed=progress.modulePassed&&typeof progress.modulePassed==='object'?progress.modulePassed:{};
+        const publishedCount=24;
+        const passedCount=completed.filter(id=>passed[id]===true).length;
+        const percent=Math.min(100,Math.round(passedCount/publishedCount*100));
+        const certificate=certificates.find(c=>String(c.learner_id)===String(learner.learner_id)&&c.course_id==='__program__');
+        const row=document.createElement('article');
+        row.style.cssText='border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px;background:var(--paper)';
+        const top=document.createElement('div');
+        top.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap';
+        const identity=document.createElement('div');
+        identity.style.cssText='display:grid;gap:4px;min-width:180px';
         const title=document.createElement('strong');title.textContent=learner.display_name||learner.email||('Participante '+String(learner.learner_id).slice(0,8));
-        const details=document.createElement('small');details.className='tagline';details.textContent=completed+' curso(s) concluído(s) · '+passed+' aprovação(ões) registrada(s) · atualizado '+new Date(learner.updated_at).toLocaleString('pt-BR');
-        const warning=document.createElement('small');warning.className='tagline';warning.textContent='Registro do navegador; identidade e avaliações ainda precisam de validação.';
-        row.append(title,details,warning);list.appendChild(row);
+        const email=document.createElement('small');email.className='tagline';email.textContent=learner.email||'';
+        identity.append(title,email);
+        const percentLabel=document.createElement('strong');percentLabel.textContent=percent+'%';
+        top.append(identity,percentLabel);
+        const bar=document.createElement('div');bar.style.cssText='height:9px;background:var(--line);border-radius:20px;overflow:hidden';
+        const fill=document.createElement('div');fill.style.cssText='height:100%;width:'+percent+'%;background:'+(percent===100?'#3f8067':'var(--gold)')+';border-radius:20px;transition:width .2s';bar.append(fill);
+        const detail=document.createElement('small');detail.className='tagline';detail.textContent=passedCount+' de '+publishedCount+' cursos concluídos e aprovados · última atualização '+new Date(learner.updated_at).toLocaleString('pt-BR');
+        const certificateStatus=document.createElement('div');certificateStatus.className='tagline';
+        if(certificate){certificateStatus.textContent='Certificado emitido · '+certificate.certificate_code+' · '+new Date(certificate.issued_at).toLocaleDateString('pt-BR');}
+        else if(percent===100){certificateStatus.textContent='Elegível para emissão do certificado geral.';}
+        else{certificateStatus.textContent='Certificado disponível quando atingir 100% de conclusão e aprovação.';}
+        const actions=document.createElement('div');actions.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+        if(percent===100&&!certificate){
+          const issue=document.createElement('button');issue.type='button';issue.className='primary';issue.textContent='Emitir certificado';
+          issue.onclick=async()=>{issue.disabled=true;issue.textContent='Validando...';try{const result=await request('/api/admin/certificates/program/'+encodeURIComponent(learner.learner_id),{method:'POST',body:'{}'});renderCertificate(result.certificate);await loadLearnerProgress();}catch(e){certificateStatus.textContent=e.message;issue.disabled=false;issue.textContent='Emitir certificado';}};
+          actions.append(issue);
+        }
+        if(certificate){
+          const print=document.createElement('button');print.type='button';print.className='secondary';print.textContent='Abrir / imprimir certificado';print.onclick=()=>renderCertificate(certificate);actions.append(print);
+        }
+        row.append(top,bar,detail,certificateStatus,actions);list.append(row);
       });
     } catch(e) {status.textContent='Não foi possível carregar os registros: '+e.message;}
+  }
+  function renderCertificate(certificate){
+    const win=window.open('','_blank');
+    if(!win){sayAuth('O navegador bloqueou o certificado. Permita pop-ups e tente novamente.');return;}
+    const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const date=new Date(certificate.issued_at).toLocaleDateString('pt-BR');
+    win.document.open();
+    win.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Certificado Universidade MB</title><style>*{box-sizing:border-box}body{margin:0;background:#eee8df;color:#29231d;font-family:Georgia,serif}.actions{margin:14px auto;text-align:center;font:14px Arial}.actions button{padding:10px 16px;border:0;border-radius:8px;background:#29231d;color:#fff;cursor:pointer}.sheet{width:297mm;min-height:210mm;margin:12px auto;padding:14mm;background:#fffdf8;border:3px solid #b78a45;text-align:center;display:flex;align-items:stretch}.inner{width:100%;border:1px solid #dfc99e;padding:18mm;display:flex;flex-direction:column;align-items:center;justify-content:center}.brand{font:700 15px Arial;letter-spacing:3px;color:#9b7133;text-transform:uppercase}.title{font-size:34px;letter-spacing:2px;margin:24px 0;text-transform:uppercase}.name{font-size:30px;font-weight:bold;border-bottom:1px solid #b78a45;padding:8px 25px 12px;margin:12px 0 20px}.copy{font:16px/1.7 Arial;max-width:230mm}.course{font-size:22px;font-weight:bold;margin:14px 0;color:#7c5825}.details{font:12px/1.8 Arial;color:#5b5145;margin-top:18px}.code{margin-top:16px;font:10px Arial;color:#81776a}@page{size:A4 landscape;margin:0}@media print{body{background:white}.actions{display:none}.sheet{margin:0;width:297mm;height:210mm}}</style></head><body><div class="actions"><button onclick="window.print()">Imprimir / Salvar como PDF</button></div><main class="sheet"><div class="inner"><div class="brand">Universidade MB · Óptica Gestão Inteligente</div><h1 class="title">Certificado de conclusão</h1><div class="copy">Certificamos que</div><div class="name">'+esc(certificate.participant_name)+'</div><div class="copy">concluiu integralmente o programa educacional da Universidade MB, com conclusão e aprovação em todos os cursos publicados no catálogo na data da emissão.</div><div class="course">'+esc(certificate.certificate_title)+'</div><div class="details">Emitido em '+esc(date)+'<br>Documento de conclusão educacional · Não representa, por si só, habilitação profissional ou reconhecimento regulatório.</div><div class="code">Código de verificação: '+esc(certificate.certificate_code)+'</div></div></main></body></html>');
+    win.document.close();
   }
   async function loadCourses() {
     let data = await request('/api/courses?all=true');
