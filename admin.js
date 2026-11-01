@@ -76,12 +76,6 @@
   async function loadCourses() {
     let data = await request('/api/courses?all=true');
     let courses = data.courses || [];
-    // On first successful admin login, migrate the current 24-course published catalog into the central database.
-    if (!courses.length && typeof window !== 'undefined' && typeof globalThis !== 'undefined') {
-      try {
-        const catalog = (typeof courses !== 'undefined' && Array.isArray(courses)) ? courses : null;
-      } catch {}
-    }
     if (!courses.length) {
       try {
         const staticCatalog = (typeof window !== 'undefined' && Array.isArray(window.universidadeMBCatalog)) ? window.universidadeMBCatalog : null;
