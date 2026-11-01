@@ -114,6 +114,21 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
   await audit(user.rows[0].id, 'login', 'admin_user', user.rows[0].id);
   res.json({ authenticated: true, admin: req.session.admin });
 });
+app.post('/api/admin/users', requireAdmin, loginLimiter, async (req,res) => {
+  if (req.session.admin.role !== 'admin') return res.status(403).json({error:'Somente administradores autorizados podem criar novos acessos.'});
+  const email=String(req.body.email||'').trim().toLowerCase(), password=String(req.body.password||'');
+  if (!/^\\S+@\\S+\\.\\S+$/.test(email)) return res.status(400).json({error:'Informe um e-mail válido.'});
+  if (password.length<6 || password.length>128) return res.status(400).json({error:'A senha deve ter entre 6 e 128 caracteres.'});
+  try {
+    const hash=await bcrypt.hash(password,12);
+    const result=await pool.query("INSERT INTO admin_users(email,password_hash,role,is_active) VALUES($1,$2,'admin',TRUE) RETURNING id,email,role",[email,hash]);
+    await audit(req.session.admin.id,'create_admin','admin_user',result.rows[0].id,{email});
+    return res.status(201).json({admin:result.rows[0]});
+  } catch(e) {
+    if(e.code==='23505') return res.status(409).json({error:'Já existe um administrador com este e-mail.'});
+    console.error('create admin error',e.message); return res.status(500).json({error:'Não foi possível criar o administrador.'});
+  }
+});
 app.post('/api/admin/logout', requireAdmin, (req, res) => req.session.destroy(() => { res.clearCookie(COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'none' }); res.json({ authenticated: false }); }));
 app.get('/api/admin/me', (req, res) => res.json({ authenticated: Boolean(req.session?.admin), admin: req.session?.admin || null }));
 app.post('/api/learners/register', loginLimiter, async (req,res) => {
