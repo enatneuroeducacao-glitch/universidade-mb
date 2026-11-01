@@ -109,7 +109,7 @@ app.get('/api/admin/me', (req, res) => res.json({ authenticated: Boolean(req.ses
 app.get('/api/courses', async (req, res) => {
   const publishedOnly = req.query.all !== 'true';
   if (!publishedOnly) return requireAdmin(req, res, async () => {
-    const result = await pool.query('SELECT c.*, COALESCE(json_agg(json_build_object(\'id\',m.id,\'title\',m.title,\'content_html\',m.content_html,\'sort_order\',m.sort_order,\'duration_minutes\',m.duration_minutes) ORDER BY m.sort_order) FILTER (WHERE m.id IS NOT NULL), \'[]\'::json AS modules FROM courses c LEFT JOIN course_modules m ON m.course_id=c.id GROUP BY c.id ORDER BY c.sort_order,c.title');
+    const result = await pool.query('SELECT c.*, COALESCE(json_agg(json_build_object(\'id\',m.id,\'title\',m.title,\'content_html\',m.content_html,\'sort_order\',m.sort_order,\'duration_minutes\',m.duration_minutes) ORDER BY m.sort_order) FILTER (WHERE m.id IS NOT NULL), \'[]\'::json) AS modules FROM courses c LEFT JOIN course_modules m ON m.course_id=c.id GROUP BY c.id ORDER BY c.sort_order,c.title');
     res.json({ courses: result.rows });
   });
   const result = await pool.query('SELECT c.id,c.slug,c.title,c.description,c.level,c.duration,c.icon,c.sort_order, COALESCE(json_agg(json_build_object(\'id\',m.id,\'title\',m.title,\'content_html\',m.content_html,\'sort_order\',m.sort_order,\'duration_minutes\',m.duration_minutes) ORDER BY m.sort_order) FILTER (WHERE m.id IS NOT NULL), \'[]\'::json) AS modules FROM courses c LEFT JOIN course_modules m ON m.course_id=c.id WHERE c.status=\'published\' GROUP BY c.id ORDER BY c.sort_order,c.title');
