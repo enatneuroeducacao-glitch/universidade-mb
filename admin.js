@@ -14,19 +14,7 @@
   }
   const json = value => JSON.stringify(value);
   const slugify = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  function authMode(first) {
-    $('adminFirstSetup').textContent = first ? 'Cancelar configuração inicial' : 'Primeiro acesso';
-    $('adminLogin').textContent = first ? 'Criar administrador' : 'Entrar';
-    $('adminPassword').autocomplete = first ? 'new-password' : 'current-password';
-    $('adminAuthMessage').textContent = first ? 'Primeiro acesso: use o e-mail administrativo autorizado e crie uma senha com pelo menos 6 caracteres.' : '';
-  }
-  async function setup() {
-    try {
-      const data = await request('/api/admin/bootstrap', { method: 'POST', body: json({ email: $('adminEmail').value, password: $('adminPassword').value }) });
-      sayAuth('Administrador criado. Agora entre com seu e-mail e senha.');
-      authMode(false);
-    } catch (e) { sayAuth(e.message); }
-  }
+  function authMode() { $('adminLogin').textContent='Entrar'; $('adminPassword').autocomplete='current-password'; $('adminAuthMessage').textContent=''; }
   async function login() {
     try {
       await request('/api/admin/login', { method: 'POST', body: json({ email: $('adminEmail').value, password: $('adminPassword').value }) });
@@ -44,7 +32,7 @@
     admin = null; currentCourse = null;
     $('adminAuthPanel').hidden = false; $('adminWorkspace').hidden = true;
     $('adminPassword').value = '';
-    authMode(false);
+    authMode();
   }
   function coursePayload() {
     const title = $('adminCourseTitle').value.trim();
@@ -336,8 +324,8 @@
       } else { $('adminAuthPanel').hidden=false; $('adminWorkspace').hidden=true; }
     } catch { $('adminAuthPanel').hidden=false; $('adminWorkspace').hidden=true; sayAuth('Não foi possível conectar ao servidor administrativo. Verifique a publicação e as variáveis de ambiente do backend.'); }
   });
-  $('adminLogin').addEventListener('click', () => $('adminLogin').textContent === 'Criar administrador' ? setup() : login());
-  $('adminFirstSetup').addEventListener('click', () => authMode($('adminLogin').textContent !== 'Criar administrador'));
+  $('adminLogin').addEventListener('click', login);
+  $('createAdminForm')?.addEventListener('submit', async e => { e.preventDefault(); const status=$('createAdminMessage'); status.textContent='Criando administrador...'; try { const data=await request('/api/admin/users',{method:'POST',body:json({email:$('newAdminEmail').value,password:$('newAdminPassword').value})}); status.textContent='Administrador criado: '+data.admin.email; $('createAdminForm').reset(); } catch(err) { status.textContent=err.message; } });
   $('adminLogout').addEventListener('click', logout);
   $('adminNewCourse').addEventListener('click', newCourse);
   $('refreshLearnerProgress')?.addEventListener('click', loadLearnerProgress);
