@@ -188,7 +188,7 @@ app.post('/api/admin/certificates/program/:learnerId', requireAdmin, loginLimite
   const existing=await pool.query("SELECT learner_id,course_id,certificate_code,certificate_title,participant_name,issued_at FROM learner_certificates WHERE learner_id=$1 AND course_id='__program__'",[learnerId]);
   if(existing.rowCount) return res.json({certificate:existing.rows[0],already_issued:true});
   const code='UMB-'+new Date().getFullYear()+'-'+require('crypto').randomBytes(5).toString('hex').toUpperCase();
-  const title='Programa completo de formação em óptica';
+  const title='Formação Profissional Integral em Óptica';
   const created=await pool.query("INSERT INTO learner_certificates(learner_id,course_id,certificate_code,certificate_title,participant_name,issued_by) VALUES($1,'__program__',$2,$3,$4,$5) RETURNING learner_id,course_id,certificate_code,certificate_title,participant_name,issued_at",[learnerId,code,title,learner.rows[0].full_name,req.session.admin.id]);
   await audit(req.session.admin.id,'issue_certificate','learner_certificate',code,{learner_id:learnerId,certificate_title:title});
   res.status(201).json({certificate:created.rows[0],already_issued:false});
