@@ -71,6 +71,29 @@
     $('adminAssets').innerHTML = '';
     sayEditor('Preencha os dados do novo curso. Ele será salvo no banco central.');
   }
+  async function loadLearnerProgress() {
+    const status=$('learnerProgressStatus'), list=$('learnerProgressList');
+    if(!status||!list)return;
+    status.textContent='Consultando registros do servidor...';
+    try {
+      const data=await request('/api/admin/learner-progress');
+      const learners=data.learners||[];
+      status.textContent=learners.length+' participante(s) com progresso sincronizado.';
+      list.replaceChildren();
+      if(!learners.length){list.innerHTML='<p class="tagline">Ainda não há registros sincronizados.</p>';return;}
+      learners.forEach(learner=>{
+        const progress=learner.progress||{};
+        const completed=Array.isArray(progress.completed)?progress.completed.length:0;
+        const passed=progress.modulePassed&&typeof progress.modulePassed==='object'?Object.values(progress.modulePassed).filter(Boolean).length:0;
+        const row=document.createElement('div');
+        row.style.cssText='border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:4px;background:var(--paper)';
+        const title=document.createElement('strong');title.textContent=learner.display_name||learner.email||('Participante '+String(learner.learner_id).slice(0,8));
+        const details=document.createElement('small');details.className='tagline';details.textContent=completed+' curso(s) concluído(s) · '+passed+' aprovação(ões) registrada(s) · atualizado '+new Date(learner.updated_at).toLocaleString('pt-BR');
+        const warning=document.createElement('small');warning.className='tagline';warning.textContent='Registro do navegador; identidade e avaliações ainda precisam de validação.';
+        row.append(title,details,warning);list.appendChild(row);
+      });
+    } catch(e) {status.textContent='Não foi possível carregar os registros: '+e.message;}
+  }
   async function loadCourses() {
     let data = await request('/api/courses?all=true');
     let courses = data.courses || [];
@@ -173,7 +196,8 @@
         try {
           const payload = {slug:course.slug,title:course.title,description:course.description||'',level:course.level||'Fundamentos',duration:course.duration||'',icon:course.icon||'📘',sort_order:Number(course.sort_order||0),status:nextStatus};
           await request('/api/courses/'+encodeURIComponent(course.id), {method:'PUT',body:json(payload)});
-          await loadCourses(); sayEditor(nextStatus === 'archived' ? 'Curso arquivado. Ele não aparece no catálogo público.' : 'Curso restaurado como rascunho.');
+          await loadCourses();
+        await loadLearnerProgress(); sayEditor(nextStatus === 'archived' ? 'Curso arquivado. Ele não aparece no catálogo público.' : 'Curso restaurado como rascunho.');
         } catch (e) { sayEditor('Não foi possível alterar o curso: '+e.message); }
       });
       const del = document.createElement('button');
@@ -316,6 +340,7 @@
   $('adminFirstSetup').addEventListener('click', () => authMode($('adminLogin').textContent !== 'Criar administrador'));
   $('adminLogout').addEventListener('click', logout);
   $('adminNewCourse').addEventListener('click', newCourse);
+  $('refreshLearnerProgress')?.addEventListener('click', loadLearnerProgress);
   $('adminCourseForm').addEventListener('submit', saveCourse);
   $('adminSaveModule').addEventListener('click', saveModule);
   $('adminCourseFiles').addEventListener('change', uploadAsset);
