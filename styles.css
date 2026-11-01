@@ -117,3 +117,34 @@ html{scroll-behavior:smooth}
 #view-courses .course-card .pill{background:#f3eadb;color:#805d2b;border:1px solid #ead9bd}
 @media(max-width:850px){#view-courses .catalog-intro{grid-template-columns:auto minmax(0,1fr)}#view-courses .catalog-count{grid-column:2;justify-self:start;text-align:left;padding:8px 12px;display:flex;align-items:baseline;gap:7px}#view-courses .catalog-count strong{font-size:21px}}
 @media(max-width:600px){#view-courses .catalog-intro{grid-template-columns:1fr;padding:20px;gap:12px;margin-bottom:22px}#view-courses .catalog-intro-icon{width:48px;height:48px;font-size:24px}#view-courses .catalog-count{grid-column:auto}#view-courses .catalog-section-head{align-items:stretch}#view-courses .catalog-search-wrap{width:100%;min-width:0}#view-courses .course-card .course-illustration{height:130px}#view-courses .course-card p{min-height:0}}
+
+
+/* Apresentação pública do curso: painel próprio, sem alertas do navegador */
+body.presentation-open{overflow:hidden}
+.course-presentation-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(32,27,22,.62);backdrop-filter:blur(5px);overflow-y:auto}
+.course-presentation-overlay.hidden{display:none!important}
+.course-presentation-dialog{position:relative;width:min(100%,760px);max-height:min(88vh,900px);overflow:auto;padding:clamp(24px,4vw,42px);border:1px solid #e8d8c0;border-radius:22px;background:#fffdfa;box-shadow:0 28px 90px rgba(0,0,0,.28);animation:presentationIn .18s ease-out}
+.course-presentation-close{position:absolute;top:15px;right:15px;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;border:1px solid #e5d9c8;background:#f7f1e8;color:#34291f;font-size:27px;line-height:1}
+.course-presentation-close:hover{background:#efe1ca}
+.presentation-kicker{padding-right:48px;color:#9a7136;font-size:11px;font-weight:850;letter-spacing:.13em}
+.presentation-heading{display:flex;align-items:center;gap:16px;margin:22px 0 16px}
+.presentation-course-icon{display:grid;place-items:center;flex:0 0 66px;width:66px;height:66px;border-radius:18px;background:#27221d;color:#f5d78e;font-size:30px;box-shadow:inset 0 0 0 1px #b1813f}
+.presentation-level{display:inline-block;padding:4px 10px;border-radius:30px;background:#f3eadb;color:#805d2b;font-size:11px;font-weight:800}
+.presentation-heading h2{font-size:clamp(23px,3.5vw,34px);line-height:1.2;letter-spacing:-.03em;margin:8px 45px 0 0;color:#2e2924}
+.presentation-description{font-size:16px;line-height:1.75;color:#76695b;margin:18px 0 22px}
+.presentation-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.presentation-metrics>div{padding:15px 17px;border:1px solid #e9ddcc;border-radius:13px;background:#fbf6ee;display:grid;gap:5px}
+.presentation-metrics span{font-size:12px;color:#817568}
+.presentation-metrics strong{font-size:15px;color:#34291f}
+.presentation-program{margin-top:25px}
+.presentation-program h3{font-size:17px;margin:0 0 12px}
+.presentation-program ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.presentation-program li{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid #eee4d6;border-radius:10px;color:#51483e;background:#fff}
+.presentation-check{flex:0 0 22px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:#e8efe8;color:#42745e;font-size:12px;font-weight:850}
+.presentation-access-note{margin-top:22px;padding:17px 18px;border-left:4px solid #b1813f;border-radius:10px;background:#f8f0e3}
+.presentation-access-note strong{color:#49372a}
+.presentation-access-note p{margin:5px 0 0;color:#76695b;font-size:13px;line-height:1.6}
+.presentation-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:22px}
+.presentation-actions button{min-height:46px;padding:11px 16px}
+@keyframes presentationIn{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:560px){.course-presentation-overlay{padding:10px;align-items:flex-end}.course-presentation-dialog{max-height:92vh;padding:24px 18px 20px;border-radius:20px 20px 14px 14px}.presentation-heading{align-items:flex-start;gap:12px}.presentation-course-icon{width:52px;height:52px;flex-basis:52px;font-size:24px;border-radius:14px}.presentation-heading h2{font-size:23px;margin-right:22px}.presentation-metrics{grid-template-columns:1fr}.presentation-actions{display:grid;grid-template-columns:1fr}.presentation-actions button{width:100%}}
