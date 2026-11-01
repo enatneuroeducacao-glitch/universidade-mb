@@ -1,4 +1,4 @@
-const courses=[
+let courses=[
 {id:'receita',icon:'🧾',level:'Fundamentos',title:'Leitura de receitas ópticas',desc:'Interprete a estrutura de uma prescrição, identifique parâmetros e faça conferência técnica sem alterar dados clínicos.',time:'1h30',units:[
 ['Elementos da receita',`<p>Uma receita óptica reúne parâmetros que orientam a fabricação ou a seleção da correção visual. A leitura deve ser sistemática: confira primeiro a identificação do cliente, a data e a origem do documento; depois leia separadamente as informações de cada olho e, por fim, os campos adicionais e as observações.</p>
 <h3>OD e OE: orientação por olho</h3><p><b>OD</b> significa olho direito e <b>OE</b>, olho esquerdo. Algumas receitas apresentam os olhos em linhas e outras em colunas. Antes de transcrever, identifique o cabeçalho de cada campo e não deduza a posição apenas pela aparência do documento. Um valor lançado no olho errado pode comprometer todo o pedido.</p>
@@ -582,3 +582,29 @@ document.getElementById('exportProgress').addEventListener('click',()=>{try{cons
 document.getElementById('importProgressFile').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{const payload=JSON.parse(await file.text());const imported=payload&&payload.progress?payload.progress:payload;if(!imported||!Array.isArray(imported.completed)||!imported.scores||typeof imported.scores!=='object'||(imported.lastScore!==null&&imported.lastScore!==undefined&&(!Number.isFinite(imported.lastScore)||imported.lastScore<0||imported.lastScore>100)))throw new Error('Formato inválido');if(!confirm('Importar este arquivo e substituir o progresso atual deste navegador?'))return;const validIds=new Set(courses.map(c=>c.id));state={completed:[...new Set(imported.completed.filter(id=>typeof id==='string'&&validIds.has(id)))],scores:Object.fromEntries(Object.entries(imported.scores).filter(([id,score])=>validIds.has(id)&&Number.isFinite(score)&&score>=0&&score<=100)),lastScore:Number.isFinite(imported.lastScore)?imported.lastScore:null,source:'Arquivo JSON importado ('+file.name+')',updatedAt:new Date().toISOString()};localStorage.setItem(PROGRESS_KEY,JSON.stringify(state));renderStats();document.getElementById('progressTransferStatus').textContent='Progresso importado. Cursos que não existem nesta versão foram ignorados.';}catch(err){document.getElementById('progressTransferStatus').textContent='Arquivo inválido. Selecione um JSON exportado pela Universidade MB.';}finally{e.target.value='';}});
 document.getElementById('fieldWidth').onchange=drawMultifocal;drawMultifocal();
 const isQuarterDiopter=v=>Number.isFinite(v)&&Math.abs(v*4-Math.round(v*4))<1e-8;document.getElementById('calcNear').onclick=()=>{const sv=document.getElementById('nearSphere').value,av=document.getElementById('addition').value;const out=document.getElementById('nearResult');if(sv===''||av===''){out.textContent='Preencha esfera para longe e ADD.';return}const s=Number(sv),a=Number(av);if(!isQuarterDiopter(s)||!isQuarterDiopter(a)||a<0){out.textContent='Valores inválidos. Use dioptrias em passos de 0,25 D e ADD igual ou maior que zero.';return}const result=s+a;out.textContent=(result>0?'+':'')+result.toFixed(2).replace('.',',')+' D';};const updateRx=()=>{const s=document.getElementById('rxSphere').value,c=document.getElementById('rxCylinder').value,a=document.getElementById('rxAdd').value,u=document.getElementById('rxUse').value;let type=a==='yes'?'A receita informa ADD: isso indica uma necessidade de adição para perto, mas não obriga a escolha de uma lente multifocal.':'Sem ADD informada, a receita pode corresponder a uma lente de visão simples; confirme se os dados são completos.';let use=u==='distance'?'Opção selecionada: lente de visão simples para longe, se a receita e a avaliação profissional confirmarem essa finalidade.':u==='near'?'Opção selecionada: lente de visão simples para perto pode ser considerada mesmo quando há ADD, desde que exista a prescrição correta para perto. Não estime a receita de perto apenas por este resumo.':u==='multi'?'Opção selecionada: considerar lente multifocal/progressiva ou bifocal para combinar distâncias. A adaptação, as medidas e a rotina visual devem ser avaliadas.':a==='yes'?'Orientação inicial: considerar multifocal/progressiva ou bifocal, mas também avaliar se a pessoa prefere óculos separados para longe e perto.':'Orientação inicial: visão simples, para longe ou perto conforme a finalidade e a receita.';document.getElementById('rxExplain').textContent=type+' '+use+' '+(s==='minus'?'Esfera negativa geralmente é associada à correção da miopia.':s==='plus'?'Esfera positiva geralmente é associada à correção da hipermetropia.':'Plano indica esfera 0,00.')+' '+(c==='with'?'Há cilindro: conferir valor e eixo exatamente como prescritos.':'Sem cilindro informado neste exemplo.')+' Esta ferramenta não determina sozinha a lente adequada; confirme a receita completa com profissional habilitado.'};['rxSphere','rxCylinder','rxAdd','rxUse'].forEach(id=>document.getElementById(id).onchange=updateRx);renderCourses();renderStats();renderQuiz();renderGlossary();updateRx();showView('home');
+(async function loadPublishedCatalogFromServer(){
+  try {
+    const response = await fetch('https://universidade-mb-api.onrender.com/api/courses', {cache:'no-store'});
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!Array.isArray(payload.courses) || !payload.courses.length) return;
+    const serverCourses = payload.courses.map(course => ({
+      id: course.id,
+      icon: course.icon || '📘',
+      level: course.level || 'Fundamentos',
+      title: course.title || 'Curso',
+      desc: course.description || '',
+      time: course.duration || '',
+      units: (course.modules || []).map(module => [module.title || 'Módulo', module.content_html || '<p>Conteúdo em preparação.</p>']),
+      resources: []
+    }));
+    if (serverCourses.length) {
+      courses = serverCourses;
+      renderCourses(document.getElementById('courseSearch')?.value || '');
+      renderStats();
+      renderQuiz();
+    }
+  } catch (error) {
+    console.warn('Não foi possível atualizar o catálogo publicado; mantendo a versão local.', error);
+  }
+})();
