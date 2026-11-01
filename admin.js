@@ -74,8 +74,33 @@
     sayEditor('Preencha os dados do novo curso. Ele será salvo no banco central.');
   }
   async function loadCourses() {
-    const data = await request('/api/courses?all=true');
-    const courses = data.courses || [];
+    let data = await request('/api/courses?all=true');
+    let courses = data.courses || [];
+    // On first successful admin login, migrate the current 24-course published catalog into the central database.
+    if (!courses.length && typeof window !== 'undefined' && typeof globalThis !== 'undefined') {
+      try {
+        const catalog = (typeof courses !== 'undefined' && Array.isArray(courses)) ? courses : null;
+      } catch {}
+    }
+    if (!courses.length) {
+      try {
+        const staticCatalog = (typeof window !== 'undefined' && Array.isArray(window.universidadeMBCatalog)) ? window.universidadeMBCatalog : null;
+        if (staticCatalog?.length) {
+          for (let index=0; index<staticCatalog.length; index++) {
+            const item=staticCatalog[index];
+            const payload={id:item.id,slug:slugify(item.title),title:item.title,description:item.desc||'',level:item.level||'Fundamentos',duration:item.time||'',icon:item.icon||'📘',sort_order:index,status:'published'};
+            await request('/api/courses',{method:'POST',body:json(payload)});
+            for (let unitIndex=0; unitIndex<(item.units||[]).length; unitIndex++) {
+              const unit=item.units[unitIndex];
+              await request('/api/courses/'+encodeURIComponent(item.id)+'/modules',{method:'POST',body:json({title:unit[0],content_html:unit[1],sort_order:unitIndex})});
+            }
+          }
+          data = await request('/api/courses?all=true');
+          courses = data.courses || [];
+          sayEditor('Catálogo inicial migrado para o banco central.');
+        }
+      } catch (e) { sayEditor('O catálogo ainda não foi migrado: '+e.message); }
+    }
     const list = $('adminCourseList');
     list.replaceChildren();
     if (!courses.length) {
