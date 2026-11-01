@@ -46,7 +46,15 @@
 <div class="panel"><small class="tagline">Rascunhos</small><h2 id="dashDraftCourses" style="margin:6px 0;font-size:30px">—</h2><span class="tagline">Em preparação</span></div>
 <div class="panel"><small class="tagline">Arquivados</small><h2 id="dashArchivedCourses" style="margin:6px 0;font-size:30px">—</h2><span class="tagline">Fora do catálogo</span></div>
 </div>
-<div class="panel" style="margin-bottom:18px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0">Certificados e conclusão</h3><p class="tagline" style="margin:5px 0 0">A liberação automática exige progresso individual registrado no servidor. Atualmente, o progresso do aluno é armazenado localmente no navegador e ainda não pode ser validado pelo painel administrativo.</p></div><span class="tagline">Integração de progresso pendente</span></div></div>
+<div class="panel" style="margin-bottom:18px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0">Certificados e conclusão</h3><p class="tagline" style="margin:5px 0 0">O progresso agora é sincronizado com o servidor. A elegibilidade exibida é informativa até que a identidade do participante e as avaliações sejam verificadas.</p></div><span class="tagline">Integração de progresso pendente</span></div></div>
+<div class="panel" style="margin-bottom:18px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div><h3 style="margin:0">Progresso dos participantes</h3><p class="tagline">Registros sincronizados a partir dos navegadores. Identidade ainda não verificada.</p></div>
+    <button class="secondary" id="refreshLearnerProgress">Atualizar registros</button>
+  </div>
+  <div id="learnerProgressStatus" class="tagline" style="margin:8px 0">Carregando registros...</div>
+  <div id="learnerProgressList" style="display:grid;gap:8px"></div>
+</div>
 <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px"><span id="adminSignedIn" class="tagline"></span><span style="flex:1"></span><button class="secondary" id="adminNewCourse">+ Novo curso</button><button class="secondary" id="adminBack">Voltar ao catálogo</button><button class="secondary" id="adminLogout">Sair</button></div>
 <div class="grid" style="display:grid;grid-template-columns:minmax(220px,0.8fr) minmax(320px,1.7fr);gap:18px;align-items:start">
 <div class="panel"><h3>Cursos cadastrados</h3><p class="tagline">Selecione um curso para editar.</p><div id="adminCourseList" style="display:grid;gap:8px"></div></div>
