@@ -481,7 +481,7 @@ const courseChronologyTitles = [
   "Liderança e treinamento de equipes de ótica",
   "Equipamentos de triagem visual em eventos"
 ];
-const normalizeCourseTitle = value => String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+const normalizeCourseTitle = value => String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
 const courseChronologyRank = new Map(courseChronologyTitles.map((title,index)=>[normalizeCourseTitle(title),index]));
 for (const course of additionalCourses) if (!courses.some(existing => existing.id === course.id)) courses.push(course);
 courses.sort((a,b) => (courseChronologyRank.get(normalizeCourseTitle(a.title)) ?? Number.MAX_SAFE_INTEGER) - (courseChronologyRank.get(normalizeCourseTitle(b.title)) ?? Number.MAX_SAFE_INTEGER));
